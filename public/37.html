@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	path {
+		fill: #ddd;
+	}
+</style>
+
+<body>
+	<svg width="700" height="200">
+   	<g transform="translate(100,100)"></g>
+   </svg>
+
+	<script>
+		var radialAreaGenerator = d3.radialArea()
+			.angle(function(d) {
+				return d.angle;
+			})
+			.innerRadius(function(d) {
+				return d.r0;
+			})
+			.outerRadius(function(d) {
+				return d.r1;
+			});
+
+		var points = [{
+				angle: 0,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 0.25,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 0.5,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 0.75,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 1.25,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 1.5,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 1.75,
+				r0: 20,
+				r1: 80
+			},
+			{
+				angle: Math.PI * 2,
+				r0: 20,
+				r1: 80
+			}
+		];
+
+		var pathData = radialAreaGenerator(points);
+
+		// Create a path element and set its d attribute
+		d3.select('g')
+			.append('path')
+			.attr('d', pathData);
+	</script>
+</body>
+
+</html>

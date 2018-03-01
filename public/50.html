@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	body {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 14px;
+		color: #333;
+	}
+
+	div {
+		margin: 20px;
+	}
+
+	div span {
+		font-weight: bold;
+	}
+</style>
+
+<body>
+
+	<div id="content"></div>
+
+	<script>
+		var data = {
+			"name": "A1",
+			"children": [{
+					"name": "B1",
+					"children": [{
+							"name": "C1",
+							"value": 100
+						},
+						{
+							"name": "C2",
+							"value": 300
+						},
+						{
+							"name": "C3",
+							"value": 200
+						}
+					]
+				},
+				{
+					"name": "B2",
+					"value": 200
+				}
+			]
+		};
+
+		function showArrayElements(data, title, showLog) {
+			d3.select('#content')
+				.append('div')
+				.html('<span>' + title + '</span>: ' + data.map(function(d) {
+					if(showLog){
+						console.log(d);
+					}
+					return d.data.name;
+				}).join(', '))
+		}
+
+		function showLinkArrayElements(data, title) {
+			d3.select('#content')
+				.append('div')
+				.html('<span>' + title + '</span>: ' + data.map(function(d) {
+					return d.source.data.name + ' -> ' + d.target.data.name;
+				}).join(', '))
+		}
+
+		var root = d3.hierarchy(data)
+
+		var ancestors = root.children[0].children[1].ancestors()
+		var descendants = root.descendants()
+		var leaves = root.leaves()
+		var path = root.path(root.children[0].children[1])
+		var links = root.links()
+
+		showArrayElements(ancestors, "root.children[0].children[1].ancestors()")
+		showArrayElements(descendants, "root.descendants()", true)
+		showArrayElements(leaves, "root.leaves()")
+		showArrayElements(path, "root.path(root.children[0].children[1])")
+		showLinkArrayElements(links, "root.links()")
+	</script>
+</body>
+
+</html>

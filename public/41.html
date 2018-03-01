@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+</style>
+
+<body>
+
+	<svg width="700" height="170">
+	  	<g transform="translate(20, -50)"></g>
+	  </svg>
+
+	<script>
+		var yScale = d3.scaleLinear().domain([0, 800]).range([200, 0]);
+
+		var areaGenerator = d3.area()
+			.x(function(d, i) {
+				return i * 50;
+			})
+			.y0(function(d) {
+				return yScale(d[0]);
+			})
+			.y1(function(d) {
+				return yScale(d[1]);
+			})
+			.curve(d3.curveCatmullRom);
+
+		var colors = ['#FBB65B', '#FBCF3B', '#de3163', '#4A79A4'];
+
+		var data = [{
+				day: 1,
+				apricots: 100,
+				bananas: 140,
+				cherries: 105,
+				damsons: 80
+			},
+			{
+				day: 2,
+				apricots: 110,
+				bananas: 150,
+				cherries: 105,
+				damsons: 40
+			},
+			{
+				day: 3,
+				apricots: 130,
+				bananas: 160,
+				cherries: 115,
+				damsons: 50
+			},
+			{
+				day: 4,
+				apricots: 110,
+				bananas: 200,
+				cherries: 110,
+				damsons: 90
+			},
+			{
+				day: 5,
+				apricots: 100,
+				bananas: 220,
+				cherries: 105,
+				damsons: 120
+			},
+			{
+				day: 6,
+				apricots: 120,
+				bananas: 240,
+				cherries: 105,
+				damsons: 150
+			},
+			{
+				day: 7,
+				apricots: 80,
+				bananas: 230,
+				cherries: 105,
+				damsons: 150
+			},
+			{
+				day: 8,
+				apricots: 100,
+				bananas: 215,
+				cherries: 110,
+				damsons: 100
+			},
+			{
+				day: 9,
+				apricots: 60,
+				bananas: 185,
+				cherries: 105,
+				damsons: 150
+			},
+			{
+				day: 10,
+				apricots: 120,
+				bananas: 180,
+				cherries: 130,
+				damsons: 150
+			}
+		];
+
+		var stack = d3.stack()
+			.keys(['apricots', 'bananas', 'cherries', 'damsons'])
+			.order(d3.stackOrderInsideOut)
+			.offset(d3.stackOffsetWiggle);
+
+		var stackedSeries = stack(data);
+
+		d3.select('g')
+			.selectAll('path')
+			.data(stackedSeries)
+			.enter()
+			.append('path')
+			.style('fill', function(d, i) {
+				return colors[i];
+			})
+			.attr('d', areaGenerator)
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	svg path {
+		opacity: 0.8;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="800">
+		<g transform="translate(400, 400)">
+		</g>
+  </svg>
+
+	<script>
+		var color = d3.scaleOrdinal()
+			.domain(d3.range(4))
+			.range(["#FFDD89", "#957244", "#F26223"]);
+
+		var chordGenerator = d3.chord()
+			.sortSubgroups(d3.ascending)
+			.padAngle(0.05)
+
+		var ribbonGenerator = d3
+			.ribbon()
+			.radius(300);
+
+		var arcGenerator = d3.arc()
+			.innerRadius(300)
+			.outerRadius(320);
+
+		var data = [
+			[0, 20, 30],
+			[40, 0, 80],
+			[100, 200, 0]
+		];
+
+		// var data = [
+		//   [0,  5871, 8916, 2868],
+		//   [ 1951, 0, 2060, 6171],
+		//   [ 8010, 16145, 0, 8045],
+		//   [ 1013,   990,  940, 0]
+		// ];
+
+
+		var chords = chordGenerator(data);
+
+		console.log(chords)
+
+		var rootG = d3.select('g')
+
+		var group = rootG.append("g")
+			.attr("class", "groups")
+			.selectAll("g")
+			.data(chords.groups)
+			.enter().append("g");
+
+		group.append("path")
+			.style("fill", function(d) {
+				return color(d.index);
+			})
+			.style("stroke", function(d) {
+				return d3.rgb(color(d.index)).darker();
+			})
+			.attr("d", arcGenerator);
+
+		rootG
+			.append('g')
+			.attr("class", "ribbon")
+			.selectAll('path')
+			.data(chords)
+			.enter()
+			.append('path')
+			.style('fill', function(d) {
+				console.log(d)
+
+				if (d.source.value > d.target.value) {
+					return color(d.source.index)
+				} else if (d.source.value < d.target.value) {
+					return color(d.target.index)
+				} else {
+					return color(d.source.index);
+				}
+			})
+			.style("stroke", function(d) {
+				return d3.rgb(color(d.index)).darker();
+			})
+			.attr('d', ribbonGenerator)
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	text {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 12px;
+		text-anchor: middle;
+	}
+
+	path {
+		fill: none;
+		stroke: #999;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="70">
+	 <g transform="translate(50, 20)"></g>
+ </svg>
+
+	<script>
+		var symbolGenerator = d3.symbol()
+			.size(100);
+
+		var symbolTypes = ['symbolCircle', 'symbolCross', 'symbolDiamond', 'symbolSquare', 'symbolStar', 'symbolTriangle', 'symbolWye'];
+
+		var xScale = d3.scaleLinear().domain([0, symbolTypes.length - 1]).range([0, 700]);
+
+		d3.select('g')
+			.selectAll('path')
+			.data(symbolTypes)
+			.enter()
+			.append('path')
+			.attr('transform', function(d, i) {
+				return 'translate(' + xScale(i) + ', 0)';
+			})
+			.attr('d', function(d) {
+				symbolGenerator
+					.type(d3[d]);
+
+				return symbolGenerator();
+			});
+
+		d3.select('g')
+			.selectAll('text')
+			.data(symbolTypes)
+			.enter()
+			.append('text')
+			.attr('transform', function(d, i) {
+				return 'translate(' + xScale(i) + ', 40)';
+			})
+			.text(function(d) {
+				return 'd3.' + d;
+			});
+	</script>
+</body>
+
+</html>

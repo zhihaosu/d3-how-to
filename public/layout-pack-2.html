@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	circle {
+		fill: indianred;
+		opacity: 0.3;
+		stroke: white;
+	}
+
+	text {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		fill: white;
+		font-size: 10px;
+		text-anchor: middle;
+	}
+</style>
+
+<body>
+	<svg width="320" height="320">
+	    <g></g>
+	  </svg>
+
+	<script>
+		var data = {
+			"name": "A1",
+			"children": [{
+					"name": "B1",
+					"children": [{
+							"name": "C1",
+							"value": 100
+						},
+						{
+							"name": "C2",
+							"value": 300
+						},
+						{
+							"name": "C3",
+							"value": 200
+						}
+					]
+				},
+				{
+					"name": "B2",
+					"value": 200
+				}
+			]
+		};
+
+		// 原始hierarchy数据
+		var root2 = d3.hierarchy(data)
+		console.log('原始hierarchy数据')
+		console.log(root2)
+
+		var packLayout = d3.pack()
+			.size([300, 300])
+			.padding(10);
+
+		var root = d3.hierarchy(data)
+
+		// sum增加value属性
+		root.sum(function(d) {
+			return d.value;
+		});
+		packLayout(root);
+		// pack结构数据，增加r, x, y
+		console.log('pack结构数据，增加r,x,y')
+		console.log(root)
+
+		var nodes = d3.select('svg g')
+			.selectAll('g')
+			.data(root.descendants())
+			.enter()
+			.append('g')
+			.attr('transform', function(d) {
+				return 'translate(' + [d.x, d.y] + ')'
+			})
+
+		nodes
+			.append('circle')
+			.attr('r', function(d) {
+				return d.r;
+			})
+
+		nodes
+			.append('text')
+			.attr('dy', 4)
+			.text(function(d) {
+				return d.children === undefined ? d.data.name : '';
+			})
+	</script>
+</body>
+
+</html>

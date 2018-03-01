@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	.node {
+		fill: steelblue;
+		stroke: none;
+		stroke-width: 2px
+	}
+
+	.link {
+		fill: none;
+		stroke: #ccc;
+		stroke-width: .5px;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="400">
+    <g transform="translate(5, 10)">
+      <g class="links"></g>
+      <g class="nodes"></g>
+    </g>
+  </svg>
+
+	<script>
+		var data = {
+			"name": "A1",
+			"children": [{
+					"name": "B1",
+					"children": [{
+							"name": "C1"
+						},
+						{
+							"name": "C2"
+						},
+						{
+							"name": "C3"
+						}
+					]
+				},
+				{
+					"name": "B2",
+					"children": [{
+							"name": "D1"
+						},
+						{
+							"name": "D2"
+						},
+						{
+							"name": "D3"
+						}
+					]
+				},
+				{
+					"name": "B3"
+				}
+			]
+		}
+
+
+		// 原始hierarchy数据
+		var root2 = d3.hierarchy(data)
+		console.log('原始hierarchy数据')
+		console.log(root2.descendants())
+
+		var root = d3.hierarchy(data)
+		var treeLayout = d3.tree()
+			.size([800, 300])
+
+		treeLayout(root)
+		// tree结构数据，增加x,y
+		console.log('tree结构数据，增加x,y')
+		console.log(root.descendants())
+
+		// Nodes
+		var nodeEnter = d3.select('svg g.nodes')
+			.selectAll('circle.node')
+			.data(function() {
+				var nodes = root.descendants()
+				console.log(nodes)
+				nodes.forEach(function(o){
+					o.y = 300 - o.y
+				})
+				return nodes
+			})
+			.enter()
+
+		nodeEnter.append('circle')
+			.classed('node', true)
+			.attr('cx', function(d) {
+				return d.x;
+			})
+			.attr('cy', function(d) {
+				return d.y;
+			})
+			.attr('r', 4);
+
+		nodeEnter
+			.append('text')
+			.text(function(d) {
+				return d.data.name
+			})
+			.attr('transform', function(d) {
+				return "translate(" + (d.x + 4) + "," + (d.y + 6) + ")"
+			})
+
+		// Links
+		var link = d3
+			.linkVertical()
+			.x(function(d) {
+				return d.x;
+			})
+			.y(function(d) {
+				return d.y;
+			})
+
+		var linkEnter = d3.select('svg g.links')
+			.selectAll('path.link')
+			.data(root.links())
+			.enter()
+
+		linkEnter.append('path')
+			.classed('link', true)
+			.attr("d", function(d) {
+				console.log(d)
+				return link(d)
+			});
+	</script>
+</body>
+
+</html>

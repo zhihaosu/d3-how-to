@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	text {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 12px;
+		font-weight: bold;
+		fill: white;
+		text-anchor: middle;
+	}
+
+	path {
+		fill: orange;
+		stroke: white;
+	}
+</style>
+
+<body>
+
+	<svg width="700" height="220">
+	 <g transform="translate(300, 110)"></g>
+ </svg>
+
+	<script>
+		// Create an arc generator with configuration
+		var arcGenerator = d3.arc()
+			.innerRadius(20)
+			.outerRadius(100);
+
+		var arcData = [{
+				label: 'A',
+				startAngle: 0,
+				endAngle: 0.2
+			},
+			{
+				label: 'B',
+				startAngle: 0.2,
+				endAngle: 0.6
+			},
+			{
+				label: 'C',
+				startAngle: 0.6,
+				endAngle: 1.4
+			},
+			{
+				label: 'D',
+				startAngle: 1.4,
+				endAngle: 3
+			},
+			{
+				label: 'E',
+				startAngle: 3,
+				endAngle: 2 * Math.PI
+			}
+		];
+
+		// Create a path element and set its d attribute
+		d3.select('g')
+			.selectAll('path')
+			.data(arcData)
+			.enter()
+			.append('path')
+			.attr('d', arcGenerator);
+
+		// Add labels, using .centroid() to position
+		d3.select('g')
+			.selectAll('text')
+			.data(arcData)
+			.enter()
+			.append('text')
+			.each(function(d) {
+				var centroid = arcGenerator.centroid(d);
+				d3.select(this)
+					.attr('x', centroid[0])
+					.attr('y', centroid[1])
+					.attr('dy', '0.33em')
+					.text(d.label);
+			});
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	rect {
+		fill: #ddd;
+	}
+</style>
+
+<body>
+
+	<svg width="760" height="190">
+		<g transform="translate(70, 20)">
+			<rect width="30" height="30" y="0" />
+			<rect width="30" height="30" y="40" />
+			<rect width="30" height="30" y="80" />
+			<rect width="30" height="30" y="120" />
+		</g>
+	</svg>
+	<div>
+		<button onClick="update();">Click to update rect elements using function(d, i)</button>
+	</div>
+
+	<script>
+		function update() {
+			d3.selectAll('rect')
+				.attr('x', function(d, i) {
+					return i * 40;
+				});
+		}
+	</script>
+</body>
+
+</html>

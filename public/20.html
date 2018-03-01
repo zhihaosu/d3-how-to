@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	circle {
+		fill: #ddd;
+	}
+</style>
+
+<body>
+
+	<svg width="760" height="140">
+	    <g transform="translate(70, 70)">
+	      <circle />
+	      <circle />
+	      <circle />
+	      <circle />
+	      <circle />
+	    </g>
+	  </svg>
+
+	<script>
+		var cities = [{
+				name: 'London',
+				population: 8674000
+			},
+			{
+				name: 'New York',
+				population: 8406000
+			},
+			{
+				name: 'Sydney',
+				population: 4293000
+			},
+			{
+				name: 'Paris',
+				population: 2244000
+			},
+			{
+				name: 'Beijing',
+				population: 11510000
+			}
+		];
+
+		var s = d3.selectAll('circle');
+
+		s.data(cities);
+
+		s.attr('r', function(d) {
+				var scaleFactor = 0.000005;
+				return d.population * scaleFactor;
+			})
+			.attr('cx', function(d, i) {
+				return i * 120;
+			});
+	</script>
+</body>
+
+</html>

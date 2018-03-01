@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	path {
+		fill: none;
+		stroke: #999;
+	}
+
+	.node-a {
+		fill: none;
+		stroke: blue;
+		stroke-width: 2px
+	}
+
+	.node-b {
+		fill: none;
+		stroke: red;
+		stroke-width: 2px
+	}
+
+	.node-c {
+		fill: none;
+		stroke: #000;
+		stroke-width: 2px
+	}
+
+	.horizontal-link {
+		fill: none;
+		stroke: green;
+		stroke-width: .5px;
+	}
+
+	.vertical-link {
+		fill: none;
+		stroke: #000;
+		stroke-width: .5px;
+	}
+
+	.radial-link {
+		fill: none;
+		stroke: #999;
+		stroke-width: .5px;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="800">
+		<g class="rootNode">
+		</g>
+
+	</svg>
+
+	<script>
+		var rootNode = d3.select('.rootNode')
+
+		// curveCardinal line
+		var lineGenerator = d3.line().curve(d3.curveCardinal);;
+		var points = [
+			[0, 80],
+			[100, 100],
+			[200, 30]
+		];
+
+		var pathData = lineGenerator(points);
+
+		// Select the path element and set its d attribute
+		rootNode.append('path')
+			.attr('d', pathData);
+
+
+	</script>
+</body>
+
+</html>

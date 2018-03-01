@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	body {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 14px;
+		color: #333;
+	}
+
+	circle {
+		fill: #888;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="80">
+	 <g id="wrapper" transform="translate(40, 40)">
+	 </g>
+ </svg>
+
+	<script>
+		var linearScale = d3.scaleLinear()
+			.domain([0, 100])
+			.range([0, 700]);
+
+		var sqrtScale = d3.scaleSqrt()
+			.domain([0, 100])
+			.range([0, 30]);
+
+		var myData = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+		d3.select('#wrapper')
+			.selectAll('circle')
+			.data(myData)
+			.enter()
+			.append('circle')
+			.attr('r', function(d) {
+				return sqrtScale(d);
+			})
+			.attr('cx', function(d) {
+				return linearScale(d);
+			});
+	</script>
+</body>
+
+</html>
