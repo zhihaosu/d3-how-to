@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	path {
+		fill: none;
+		stroke: #999;
+	}
+</style>
+
+<body>
+
+	<svg width="700" height="200">
+  	<g transform="translate(100,100)"></g>
+  </svg>
+
+	<script>
+		var radialLineGenerator = d3.radialLine();
+
+		// x = radian , y = radius
+		var points = [
+			[0, 80],
+			[Math.PI * 0.25, 80],
+			[Math.PI * 0.5, 80],
+			[Math.PI * 0.75, 80],
+			[Math.PI, 80],
+			[Math.PI * 1.25, 80],
+			[Math.PI * 1.5, 80],
+			[Math.PI * 1.75, 80],
+			[Math.PI * 2, 80]
+		];
+
+		var radialLine = radialLineGenerator(points);
+
+		console.log(radialLine)
+
+		d3.select('g')
+			.append('path')
+			.attr('d', radialLine);
+	</script>
+</body>
+
+</html>

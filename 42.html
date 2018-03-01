@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	path.orange {
+		fill: orange;
+	}
+
+	path.red {
+		fill: #ff0000;
+	}
+</style>
+
+<body>
+
+	<svg width="700" height="600">
+  	<g transform="translate(300, 110)"></g>
+  </svg>
+	<script>
+		// Create an arc generator with configuration
+		var arcGenerator = d3.arc();
+
+		arcGenerator
+			.padAngle(.02)
+			.padRadius(100)
+			.cornerRadius(4);
+
+		// Generate the path string
+		var pathData = arcGenerator({
+			startAngle: 0,
+			endAngle: 0.5 * Math.PI,
+			innerRadius: 50,
+			outerRadius: 100
+		});
+
+		var pathData2 = arcGenerator({
+			startAngle: 0.5 * Math.PI,
+			endAngle: Math.PI,
+			innerRadius: 50,
+			outerRadius: 120
+		});
+
+		// Create a path element and set its d attribute
+		d3.select('g')
+			.append('path')
+			.classed('orange', true)
+			.attr('d', pathData);
+
+		d3.select('g')
+			.append('path')
+			.classed('red', true)
+			.attr('d', pathData2);
+	</script>
+</body>
+
+</html>

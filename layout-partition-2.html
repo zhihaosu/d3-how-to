@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	path {
+		fill: cadetblue;
+		opacity: 0.3;
+		stroke: white;
+	}
+</style>
+
+<body>
+	<svg width="320" height="320">
+    <g transform="translate(160, 160)"></g>
+  </svg>
+
+	<script>
+		var data = {
+			"name": "A1",
+			"children": [{
+					"name": "B1",
+					"children": [{
+							"name": "C1",
+							"value": 100
+						},
+						{
+							"name": "C2",
+							"value": 300
+						},
+						{
+							"name": "C3",
+							"value": 200
+						}
+					]
+				},
+				{
+					"name": "B2",
+					"value": 200
+				}
+			]
+		};
+
+		// 原始hierarchy数据
+		var root2 = d3.hierarchy(data)
+		console.log('原始hierarchy数据')
+		console.log(root2)
+
+		var radius = 150;
+		var partitionLayout = d3
+			.partition()
+			.size([2 * Math.PI, radius])
+
+		var root = d3.hierarchy(data)
+
+		root.sum(function(d) {
+			return d.value;
+		});
+
+		partitionLayout(root);
+		// treemap结构数据，增加x0,y0, x1,y1
+		console.log('partition结构数据，增加x0,y0, x1,y1')
+		console.log(root)
+
+		var arcGenerator = d3.arc()
+			.startAngle(function(d) {
+				return d.x0;
+			})
+			.endAngle(function(d) {
+				return d.x1;
+			})
+			.innerRadius(function(d) {
+				return d.y0;
+			})
+			.outerRadius(function(d) {
+				return d.y1;
+			});
+
+		d3.select('svg g')
+			.selectAll('path')
+			.data(root.descendants())
+			.enter()
+			.append('path')
+			.attr('d', arcGenerator);
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	body {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 14px;
+		color: #333;
+	}
+
+	#content {
+		position: relative;
+		height: 40px;
+	}
+
+	#content div {
+		position: absolute;
+		margin: 2px;
+		background-color: orange;
+		color: white;
+		padding: 8px;
+		width: 14px;
+		height: 14px;
+		text-align: center;
+	}
+</style>
+
+<body>
+
+	<div id="content">
+	</div>
+
+	<div id="menu">
+		<button onClick="doInsert();">Insert element</button>
+	</div>
+
+	<script>
+		var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		var i = 25;
+
+		function doInsert() {
+			if (i < 0)
+				return;
+
+			var myData = letters.slice(i).split('');
+			i--;
+			update(myData);
+		}
+
+		function update(data) {
+			var u = d3.select('#content')
+				.selectAll('div')
+				.data(data, function(d) {
+					return d;
+				});
+
+			u.enter()
+				.append('div')
+				.merge(u)
+				.transition()
+				.style('left', function(d, i) {
+					return i * 32 + 'px';
+				})
+				.text(function(d) {
+					return d;
+				});
+		}
+
+		doInsert();
+	</script>
+</body>
+
+</html>

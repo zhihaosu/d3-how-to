@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	.node {
+		fill: steelblue;
+		stroke: none;
+		stroke-width: 2px
+	}
+
+	.link {
+		fill: none;
+		stroke: #ccc;
+		stroke-width: .5px;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="800">
+		<g class="paths" transform="translate(400, 400)">
+		</g>
+    <g class="nodes" transform="translate(400, 400)">
+    </g>
+  </svg>
+
+	<script>
+		console.log(Math.PI)
+
+		var data = {
+			"name": "A1",
+			"children": [{
+					"name": "B1",
+					"children": [{
+							"name": "C1"
+						},
+						{
+							"name": "C2"
+						},
+						{
+							"name": "C3"
+						}
+					]
+				},
+				{
+					"name": "B2",
+					"children": [{
+							"name": "D1"
+						},
+						{
+							"name": "D2"
+						},
+						{
+							"name": "D3"
+						}
+					]
+				},
+				{
+					"name": "B3"
+				}
+			]
+		}
+
+		// 原始hierarchy数据
+		var root2 = d3.hierarchy(data)
+		console.log('原始hierarchy数据')
+		console.log(root2.descendants())
+
+		var root = d3.hierarchy(data)
+		var clusterLayout = d3.cluster()
+			.size([360, 180])
+
+		clusterLayout(root)
+		// tree结构数据，增加x,y
+		console.log('tree结构数据，增加x,y')
+		console.log(root.descendants())
+
+		// Nodes
+		let nodeEnter = d3.select('svg g.nodes')
+			.selectAll('g.node')
+			.data(root.descendants())
+			.enter()
+			.append('g')
+			.classed('node', true)
+			.attr('transform', function(d) {
+				console.log(d)
+				if (d.parent) {
+					return 'rotate(' + (d.x - 90) + ')translate(' + d.y + ')'
+				} else {
+					return ''
+				}
+			})
+
+		nodeEnter
+			.append('circle')
+			.attr('r', function(d) {
+				return 4
+			})
+			.classed('node', true)
+
+		nodeEnter
+			.append('text')
+			.text(function(d) {
+				return d.data.name // + d.x;
+			})
+			.attr('text-anchor', function(d) {
+				if (d.parent) {
+					return d.x < 180 ? 'start' : 'end'
+				} else {
+					return 'start'
+				}
+			})
+			.attr('transform', function(d) {
+				if (d.x > 180 && d.parent) {
+					return "rotate(180)translate(-10, 6)"
+				} else {
+					return "translate(10, 6)"
+				}
+			})
+
+
+		var diagonal = d3.linkRadial()
+			.angle(function(d) {
+				return d.x / 180 * Math.PI
+			})
+			.radius(function(d) {
+				return d.y
+			})
+
+		var links = root.links()
+
+		var link = d3.select('svg g.paths').selectAll('path').data(links)
+
+		link
+			.enter()
+			.append('path')
+			.classed('link', true)
+			.attr('d', diagonal)
+	</script>
+</body>
+
+</html>

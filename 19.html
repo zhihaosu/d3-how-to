@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	circle {
+		fill: #ddd;
+	}
+
+	circle.high {
+		fill: orange;
+	}
+</style>
+
+<body>
+
+	<svg width="760" height="140">
+     <g transform="translate(70, 70)">
+       <circle />
+       <circle />
+       <circle />
+       <circle />
+       <circle />
+     </g>
+   </svg>
+
+	<script>
+		var myData = [10, 40, 20, 30, 50];
+
+		var s = d3.selectAll('circle');
+
+		s.data(myData);
+
+		s.attr('r', function(d) {
+				return d;
+			})
+			.classed('high', function(d) {
+				return d >= 40;
+			})
+			.attr('cx', function(d, i) {
+				return i * 120;
+			});
+	</script>
+</body>
+
+</html>

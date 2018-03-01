@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	body {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 10px;
+		color: #333;
+	}
+
+	text {
+		fill: black;
+	}
+</style>
+
+<body>
+
+	<svg width="800" height="80">
+   	<g id="wrapper" transform="translate(40, 40)">
+   	</g>
+   </svg>
+
+	<script>
+		var logScale = d3.scaleLog()
+			.domain([10, 100000])
+			.range([0, 700]);
+
+		var myData = [10, 100, 1000, 10000, 100000];
+
+		d3.select('#wrapper')
+			.selectAll('text')
+			.data(myData)
+			.enter()
+			.append('text')
+			.attr('x', function(d) {
+				return logScale(d);
+			})
+			.text(function(d) {
+				return d;
+			});
+	</script>
+</body>
+
+</html>

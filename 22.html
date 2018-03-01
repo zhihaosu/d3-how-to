@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+</head>
+
+<style>
+	body {
+		font-family: "Helvetica Neue", Helvetica, sans-serif;
+		font-size: 14px;
+		color: #333;
+	}
+
+	#content div {
+		display: inline-block;
+		margin: 10px;
+		background-color: orange;
+		color: white;
+		padding: 30px;
+		width: 10px;
+		height: 10px;
+		text-align: center;
+	}
+</style>
+
+<body>
+
+	<div id="content">
+		<div></div>
+		<div></div>
+	</div>
+
+	<div id="menu">
+		<button onClick="update();">update</button>
+	</div>
+
+	<script>
+		var myData = [];
+
+		function update() {
+			myData = []
+			var count = Math.random() * 10
+			for (var i = 0; i < count; i++) {
+				myData.push(i)
+			}
+
+			var nodes = d3.select('#content')
+				.selectAll('div')
+				.data(myData)
+
+			nodes
+				.enter()
+				.append('div')
+				.merge(nodes)
+				.text(function(d) {
+					return d;
+				})
+
+			nodes
+				.exit()
+				.remove();
+		}
+	</script>
+</body>
+
+</html>

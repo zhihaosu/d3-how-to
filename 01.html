@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/d3.v4.js"></script>
+
+	<style>
+		path {
+			fill: none;
+			stroke: #aaa;
+		}
+	</style>
+
+</head>
+
+<body>
+
+	<svg width="800" height="600">
+		<path transform="translate(20, 0)" />
+		<g class="axis1" transform="translate(20, 200)" />
+		<g class="axis2" transform="translate(20, 400)" />
+	</svg>
+
+	<script>
+		// ex1
+		var data = [
+			[0, 50],
+			[100, 80],
+			[200, 40],
+			[300, 60],
+			[400, 30],
+			[550, 60],
+			[600, 30]
+		];
+
+		var lineGenerator = d3.line()
+		var pathString = lineGenerator(data);
+
+		d3.select('path')
+			.attr('d', pathString);
+
+		// ex2
+		var scale = d3.scaleLinear()
+			.domain([0, 1000]) // 数值范围
+			.range([0, 600]); // DOM标尺大小
+
+		var axis1 = d3
+			.axisBottom()
+			.scale(scale);
+
+		d3.select('.axis1')
+			.call(axis1);
+
+		// ex3
+		var format = d3.format(",");
+
+		var axis2 = d3.axisTop()
+			.scale(scale)
+			.tickFormat(function(d) {
+				return '￥' + format(d);
+			})
+			.ticks(10); // 多少个刻度
+
+		d3.select('.axis2')
+			.call(axis2);
+
+		// ex4
+	</script>
+</body>
+
+</html>
