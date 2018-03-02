@@ -4,7 +4,12 @@
 <head>
 	<title>D3.js Starter Kits</title>
 	<meta charset="utf-8">
+	<link rel="stylesheet" href="vendor/highlight/styles/monokai.css" />
+	<script src="js/jquery.js"></script>
 	<script src="js/d3.v4.js"></script>
+	<script src="vendor/highlight/highlight.pack.js"></script>
+	<script src="js/boot.js"></script>
+	<link rel="stylesheet" href="css/main.css" />
 </head>
 
 <style>
@@ -86,7 +91,7 @@
 			.data(function() {
 				var nodes = root.descendants()
 				console.log(nodes)
-				nodes.forEach(function(o){
+				nodes.forEach(function(o) {
 					o.y = 300 - o.y
 				})
 				return nodes

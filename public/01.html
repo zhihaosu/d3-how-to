@@ -4,8 +4,12 @@
 <head>
 	<title>D3.js Starter Kits</title>
 	<meta charset="utf-8">
+	<link rel="stylesheet" href="vendor/highlight/styles/monokai.css" />
+	<script src="js/jquery.js"></script>
 	<script src="js/d3.v4.js"></script>
-
+	<script src="vendor/highlight/highlight.pack.js"></script>
+	<script src="js/boot.js"></script>
+	<link rel="stylesheet" href="css/main.css" />
 	<style>
 		path {
 			fill: none;
@@ -24,7 +28,7 @@
 	</svg>
 
 	<script>
-		// ex1
+		// 通过一个坐标数组，让D3帮你创建一个path所需的数据
 		var data = [
 			[0, 50],
 			[100, 80],
@@ -38,6 +42,9 @@
 		var lineGenerator = d3.line()
 		var pathString = lineGenerator(data);
 
+		console.log(pathString) // D3创建的path数据 M0,50L100,80L200,40L300,60L400,30L550,60L600,30
+
+		// 选中 path, 设置d属性
 		d3.select('path')
 			.attr('d', pathString);
 
@@ -47,7 +54,7 @@
 			.range([0, 600]); // DOM标尺大小
 
 		var axis1 = d3
-			.axisBottom()
+			.axisBottom() // 标尺在底部
 			.scale(scale);
 
 		d3.select('.axis1')

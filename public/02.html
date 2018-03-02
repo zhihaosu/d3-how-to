@@ -4,7 +4,12 @@
 <head>
 	<title>D3.js Starter Kits</title>
 	<meta charset="utf-8">
+	<link rel="stylesheet" href="vendor/highlight/styles/monokai.css" />
+	<script src="js/jquery.js"></script>
 	<script src="js/d3.v4.js"></script>
+	<script src="vendor/highlight/highlight.pack.js"></script>
+	<script src="js/boot.js"></script>
+	<link rel="stylesheet" href="css/main.css" />
 	<style>
 		body {
 			font-family: "Helvetica Neue", Helvetica, sans-serif;
@@ -29,10 +34,11 @@
 
 
 	<script>
-		var treeLayout = d3.tree()
-			.size([900, 600]);
+		var treeLayout = d3
+			.tree() // tree layout
+			.size([900, 600]); // x取值范围为 0 - 900， y取值范围为0-600
 
-		function link(d) {
+		function link(d) { // 两点之间连接线函数，当然你可以使用开箱即用的 d3.linkHorizontal()， 具体使用可以参考 link-3.html
 			return "M" + d.y + "," + d.x +
 				"C" + (d.y + d.parent.y) / 2 + "," + d.x +
 				" " + (d.y + d.parent.y) / 2 + "," + d.parent.x +
@@ -40,7 +46,7 @@
 		}
 
 		function make(root) {
-			var nodes = d3.select('.nodes')
+			var nodes = d3.select('.nodes') // 我们将所有的点都放在 .nodes这个DOM里面
 				.selectAll('g.node')
 				.data(root.descendants());
 

@@ -4,47 +4,53 @@
 <head>
 	<title>D3.js Starter Kits</title>
 	<meta charset="utf-8">
+	<link rel="stylesheet" href="vendor/highlight/styles/monokai.css" />
+	<script src="js/jquery.js"></script>
 	<script src="js/d3.v4.js"></script>
+	<script src="vendor/highlight/highlight.pack.js"></script>
+	<script src="js/boot.js"></script>
+	<link rel="stylesheet" href="css/main.css" />
 </head>
 
 <style>
-circle {
-  fill: cadetblue;
-}
+	circle {
+		fill: cadetblue;
+	}
 </style>
 
 <body>
 	<div id="content">
-     <svg width="300" height="300">
+		<svg width="300" height="300">
      </svg>
-   </div>
+	</div>
 	<script>
-	var width = 300, height = 300
-	var nodes = [{}, {}, {}, {}, {}]
+		var width = 300,
+			height = 300
+		var nodes = [{}, {}, {}, {}, {}]
 
-	var simulation = d3.forceSimulation(nodes)
-	.force('charge', d3.forceManyBody().strength(-20))
-	.force('center', d3.forceCenter(width / 2, height / 2))
-	  .on('tick', ticked);
+		var simulation = d3.forceSimulation(nodes)
+			.force('charge', d3.forceManyBody().strength(-20))
+			.force('center', d3.forceCenter(width / 2, height / 2))
+			.on('tick', ticked);
 
-	function ticked() {
-	  var u = d3.select('svg')
-	    .selectAll('circle')
-	    .data(nodes)
+		function ticked() {
+			var u = d3.select('svg')
+				.selectAll('circle')
+				.data(nodes)
 
-	  u.enter()
-	    .append('circle')
-	    .attr('r', 5)
-	    .merge(u)
-	    .attr('cx', function(d) {
-	      return d.x
-	    })
-	    .attr('cy', function(d) {
-	      return d.y
-	    })
+			u.enter()
+				.append('circle')
+				.attr('r', 5)
+				.merge(u)
+				.attr('cx', function(d) {
+					return d.x
+				})
+				.attr('cy', function(d) {
+					return d.y
+				})
 
-	  u.exit().remove()
-	}
+			u.exit().remove()
+		}
 	</script>
 </body>
 

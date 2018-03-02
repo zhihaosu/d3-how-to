@@ -4,7 +4,12 @@
 <head>
 	<title>D3.js Starter Kits</title>
 	<meta charset="utf-8">
+	<link rel="stylesheet" href="vendor/highlight/styles/monokai.css" />
+	<script src="js/jquery.js"></script>
 	<script src="js/d3.v4.js"></script>
+	<script src="vendor/highlight/highlight.pack.js"></script>
+	<script src="js/boot.js"></script>
+	<link rel="stylesheet" href="css/main.css" />
 </head>
 
 <style>
@@ -30,39 +35,39 @@
   </svg>
 
 	<script>
-	var data = {
-		"name": "A1",
-		"children": [{
-				"name": "B1",
-				"children": [{
-						"name": "C1"
-					},
-					{
-						"name": "C2"
-					},
-					{
-						"name": "C3"
-					}
-				]
-			},
-			{
-				"name": "B2",
-				"children": [{
-						"name": "D1"
-					},
-					{
-						"name": "D2"
-					},
-					{
-						"name": "D3"
-					}
-				]
-			},
-			{
-				"name": "B3"
-			}
-		]
-	}
+		var data = {
+			"name": "A1",
+			"children": [{
+					"name": "B1",
+					"children": [{
+							"name": "C1"
+						},
+						{
+							"name": "C2"
+						},
+						{
+							"name": "C3"
+						}
+					]
+				},
+				{
+					"name": "B2",
+					"children": [{
+							"name": "D1"
+						},
+						{
+							"name": "D2"
+						},
+						{
+							"name": "D3"
+						}
+					]
+				},
+				{
+					"name": "B3"
+				}
+			]
+		}
 
 		// 原始hierarchy数据
 		var root2 = d3.hierarchy(data)
@@ -102,25 +107,24 @@
 				return "translate(" + (d.x + 4) + "," + (d.y + 6) + ")"
 			})
 
-			// Links
-			var link = d3
-				.linkVertical()
-				.x(function(d) {
-					return d.x;
-				})
-				.y(function(d) {
-					return d.y;
-				})
+		// Links
+		var link = d3
+			.linkVertical()
+			.x(function(d) {
+				return d.x;
+			})
+			.y(function(d) {
+				return d.y;
+			})
 
-			var linkEnter = d3.select('svg g.links')
-				.selectAll('path.link')
-				.data(root.links())
-				.enter()
+		var linkEnter = d3.select('svg g.links')
+			.selectAll('path.link')
+			.data(root.links())
+			.enter()
 
-			linkEnter.append('path')
-				.classed('link', true)
-				.attr("d", link);
-
+		linkEnter.append('path')
+			.classed('link', true)
+			.attr("d", link);
 	</script>
 </body>
 
