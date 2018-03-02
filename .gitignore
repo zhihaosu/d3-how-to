@@ -6,6 +6,4 @@ node_modules
 .tern-project
 assets.json
 npm-debug.log
-src/env.json
-src/styles/qxb-font/font-awesome-qxb.*
-src/styles/qxb-font/qxb-font-helper.js
+package-lock.json

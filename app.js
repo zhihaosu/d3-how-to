@@ -3,6 +3,7 @@ const compression = require('compression')
 const path = require('path')
 const bodyParser = require('body-parser')
 const serveIndex = require('serve-index')
+const opn = require('opn')
 
 const PORT = 9000
 const app = express()
@@ -30,4 +31,6 @@ app.listen(PORT, function(err) {
     throw err
   }
   console.log(`Listening at http://localhost:${PORT}/`) // eslint-disable-line
+
+  opn(`http://localhost:${PORT}/`)
 })
