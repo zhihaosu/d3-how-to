@@ -12,3 +12,7 @@ $ npm install
 ```shell
 $ node app.js
 ```
+
+## 杂项
+在理解D3 layout之前，先看一下这张图
+![Images](http://git.qixin007.com/qxb/enviroment/raw/master/images/git-status-01.jpg)
