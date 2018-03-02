@@ -15,4 +15,5 @@ $ node app.js
 
 ## 杂项
 在理解D3 layout之前，先看一下这张图
+
 ![Images](https://raw.githubusercontent.com/wujjpp/d3-how-to/master/public/important.png)
