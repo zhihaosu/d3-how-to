@@ -12,7 +12,7 @@ app.use(compression())
 
 app.use(express.static(path.join(__dirname, 'public')))
 
-const ignores = ['data', 'js', '00.html']
+const ignores = ['data', 'js', '00.html', 'css', 'vendor']
 app.use('/', serveIndex(path.join(__dirname, 'public'), {
   icons: true,
   filter(filename, index, files, dir) {
