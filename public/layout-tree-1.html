@@ -61,7 +61,14 @@
 							"name": "D2"
 						},
 						{
-							"name": "D3"
+							"name": "D3",
+							"children": [{
+									"name": "E1"
+								},
+								{
+									"name": "E2"
+								}
+							]
 						}
 					]
 				},
@@ -79,6 +86,7 @@
 
 		var root = d3.hierarchy(data)
 		var treeLayout = d3.tree()
+			// .nodeSize([400, 100])
 			.size([800, 300])
 
 		treeLayout(root)
