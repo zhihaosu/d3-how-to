@@ -23,9 +23,9 @@
 	}
 
 	.node>circle {
-		stroke: rgb(124, 205, 191);
+		stroke: #7ccdbf;
 		stroke-width: 0px;
-		fill: rgb(124, 205, 191);
+		fill: #7ccdbf;
 	}
 
 	.node>text {
@@ -88,7 +88,8 @@
 		}
 		var data = {
 			nodes: [node1, node2, node3, node4, node5],
-			links: [{
+			links: [
+				{
 					source: node1,
 					target: node2
 				},
@@ -112,7 +113,7 @@
 		let lastY = 0
 		let scale = 1
 
-		function parpareBoards() {
+		function prepareBoards() {
 			svg = d3.select('svg')
 			svg.call(zoom)
 
@@ -189,7 +190,6 @@
 		// 拖拽node
 		let dragNode = d3
 			.drag()
-			.on('start', function(d) {})
 			.on('drag', d => {
 				d.x = d3.event.x
 				d.y = d3.event.y
@@ -284,10 +284,10 @@
 				})
 			// link remove
 			d3Links.exit().remove()
-		}
+		 }
 
 		// 准备画布
-		parpareBoards()
+		prepareBoards()
 
 		// 画图
 		draw()
