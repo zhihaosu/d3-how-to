@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>D3.js Starter Kits</title>
+	<meta charset="utf-8">
+	<script src="js/jquery.js"></script>
+	<script src="js/d3.v4.js"></script>
+	<link rel="stylesheet" href="css/main.css" />
+</head>
+
+<style>
+	.container {
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+	}
+
+	.node {
+		cursor: pointer;
+	}
+
+	.node>circle {
+		stroke: rgb(124, 205, 191);
+		stroke-width: 0px;
+		fill: rgb(124, 205, 191);
+	}
+
+	.node>text {
+		fill: #fff;
+	}
+
+	.link {
+		stroke: #7ccdbf;
+		stroke-width: 1px;
+		fill: none;
+	}
+
+	@keyframes breath {
+		0% {
+			stroke-width: 0;
+			stroke-opacity: 1;
+		}
+		100% {
+			stroke-width: 20px;
+			stroke-opacity: 0;
+		}
+	}
+
+	.breath-node {
+		animation: breath 2s ease infinite;
+	}
+</style>
+
+<body>
+	<div class="container">
+		<svg width="100%" height="100%">
+     </svg>
+	</div>
+	<script>
+		// --------数据开始--------
+		var node1 = {
+			text: 'A',
+			x: 50,
+			y: 50
+		}
+		var node2 = {
+			text: 'B',
+			x: 200,
+			y: 100
+		}
+		var node3 = {
+			text: 'C',
+			x: 90,
+			y: 300
+		}
+		var node4 = {
+			text: 'D',
+			x: 400,
+			y: 120
+		}
+		var node5 = {
+			text: 'E',
+			x: 180,
+			y: 500
+		}
+		var data = {
+			nodes: [node1, node2, node3, node4, node5],
+			links: [{
+					source: node1,
+					target: node2
+				},
+				{
+					source: node2,
+					target: node3
+				},
+				{
+					source: node2,
+					target: node5
+				},
+				{
+					source: node4,
+					target: node5
+				}
+			]
+		}
+
+		let svg, rootBoard, nodeBoard, linkBoard
+		let lastX = 0
+		let lastY = 0
+		let scale = 1
+
+		function parpareBoards() {
+			svg = d3.select('svg')
+			svg.call(zoom)
+
+			svg.append('rect')
+				.attr('width', '100%')
+				.attr('height', '100%')
+				.attr('fill-opacity', 0)
+				.style('pointer-events', 'all')
+				.call(drag)
+
+			rootBoard = svg
+				.append('g')
+				.attr('id', 'root-board')
+				.attr('width', 800)
+				.attr('height', 600)
+
+			linkBoard = rootBoard
+				.append('g')
+				.attr('id', 'link-board')
+
+			nodeBoard = rootBoard
+				.append('g')
+				.attr('id', 'node-board')
+
+			rootBoard.append('defs')
+				.append('marker')
+				.attr('id', 'arrowOut')
+				.attr('viewBox', '0 0 12 12')
+				.attr('markerUnits', 'strokeWidth')
+				.attr('refX', 25)
+				.attr('refY', 6)
+				.attr('markerWidth', 36)
+				.attr('markerHeight', 36)
+				.attr('orient', 'auto')
+				.append('path')
+				.attr('d', 'M10,2 L2,6 L10,10 L6,6 L10,2')
+				.attr('fill', '#7ccdbf')
+
+			rootBoard.append('defs')
+				.append('marker')
+				.attr('id', 'arrowIn')
+				.attr('viewBox', '0 0 12 12')
+				.attr('markerUnits', 'strokeWidth')
+				.attr('refX', 25)
+				.attr('refY', 6)
+				.attr('markerWidth', 36)
+				.attr('markerHeight', 36)
+				.attr('orient', 'auto')
+				.append('path')
+				.attr('d', 'M2,2 L10,6 L2,10 L6,6 L2,2')
+				.attr('fill', '#7ccdbf')
+		}
+
+
+		// 缩放和移动
+		zoom = d3
+			.zoom()
+			.scaleExtent([0.5, 2])
+			.on('zoom', function() {
+				scale = d3.event.transform.k
+				rootBoard.attr('transform', 'translate(' + lastX + ',' + lastY + ')scale(' + scale + ')')
+				draw()
+			})
+
+		// 拖拽
+		let drag = d3
+			.drag()
+			.on('drag', function() {
+				lastX = lastX + d3.event.dx
+				lastY = lastY + d3.event.dy
+				console.log('aaaaaaaaaaaaaa')
+				rootBoard.attr('transform', 'translate(' + lastX + ',' + lastY + ')scale(' + scale + ')')
+			})
+
+		// 拖拽node
+		let dragNode = d3
+			.drag()
+			.on('start', function(d) {})
+			.on('drag', d => {
+				d.x = d3.event.x
+				d.y = d3.event.y
+				draw()
+			})
+
+		function draw() {
+			// --------画点开始--------
+			let d3Nodes = nodeBoard
+				.selectAll('.node')
+				.data(data.nodes)
+
+			// node enter
+			let nodeEnter = d3Nodes
+				.enter()
+				.append('g')
+				.attr('class', 'node')
+				.attr('transform', function(d) {
+					return 'translate(' + d.x + ',' + d.y + ')';
+				})
+				.call(dragNode)
+
+			// 画圈
+			nodeEnter
+				.append('circle')
+				.attr('r', 20)
+				.attr('class', 'breath-node')
+
+			nodeEnter
+				.append('text')
+				.text(function(d) {
+					return d.text
+				})
+				.style('font-size', function(d) {
+					return '20px';
+				})
+				.attr('x', function(d) {
+					return -7
+				})
+				.attr('y', function(d) {
+					return 8
+				})
+
+			// node update
+			d3Nodes
+				.attr('transform', function(d) {
+					return 'translate(' + d.x + ',' + d.y + ')';
+				})
+
+			// node remove
+			d3Nodes.exit().remove()
+
+			// --------画线开始--------
+			var d3Links = linkBoard
+				.selectAll('line')
+				.data(data.links)
+
+			// link enter
+			d3Links
+				.enter()
+				.append('line')
+				.attr('class', 'link')
+				.attr('x1', function(d) {
+					return d.source.x
+				})
+				.attr('y1', function(d) {
+					return d.source.y
+				})
+				.attr('x2', function(d) {
+					return d.target.x
+				})
+				.attr('y2', function(d) {
+					return d.target.y
+				})
+				.attr('marker-end', function(d) {
+					return 'url(#arrowIn)'
+				})
+
+			// link update
+			d3Links
+				.attr('x1', function(d) {
+					return d.source.x
+				})
+				.attr('y1', function(d) {
+					return d.source.y
+				})
+				.attr('x2', function(d) {
+					return d.target.x
+				})
+				.attr('y2', function(d) {
+					return d.target.y
+				})
+			// link remove
+			d3Links.exit().remove()
+		}
+
+		// 准备画布
+		parpareBoards()
+
+		// 画图
+		draw()
+	</script>
+</body>
+
+</html>
