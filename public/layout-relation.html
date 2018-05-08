@@ -183,7 +183,6 @@
 			.on('drag', function() {
 				lastX = lastX + d3.event.dx
 				lastY = lastY + d3.event.dy
-				console.log('aaaaaaaaaaaaaa')
 				rootBoard.attr('transform', 'translate(' + lastX + ',' + lastY + ')scale(' + scale + ')')
 			})
 
