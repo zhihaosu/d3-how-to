@@ -88,8 +88,7 @@
 		}
 		var data = {
 			nodes: [node1, node2, node3, node4, node5],
-			links: [
-				{
+			links: [{
 					source: node1,
 					target: node2
 				},
@@ -138,6 +137,7 @@
 				.append('g')
 				.attr('id', 'node-board')
 
+			// 添加两种marker,程序中只用到一种
 			rootBoard.append('defs')
 				.append('marker')
 				.attr('id', 'arrowOut')
@@ -167,7 +167,6 @@
 				.attr('fill', '#7ccdbf')
 		}
 
-
 		// 缩放和移动
 		zoom = d3
 			.zoom()
@@ -196,6 +195,7 @@
 				draw()
 			})
 
+		// 画图核心
 		function draw() {
 			// --------画点开始--------
 			let d3Nodes = nodeBoard
@@ -284,7 +284,7 @@
 				})
 			// link remove
 			d3Links.exit().remove()
-		 }
+		}
 
 		// 准备画布
 		prepareBoards()
