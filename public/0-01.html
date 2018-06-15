@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Starter Kits</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="vendor/highlight/styles/monokai.css"/>
+  <script src="js/jquery.js"></script>
+  <script src="js/d3.v4.js"></script>
+  <script src="vendor/highlight/highlight.pack.js"></script>
+  <script src="js/boot.js"></script>
+  <link rel="stylesheet" href="css/main.css"/>
+
+  <style>
+  </style>
+</head>
+
+<body>
+<p>Lion</p>
+<p>Tiger</p>
+<p>Leopoard</p>
+</body>
+<script>
+  // 定义数组
+  var data = [3, 6, 9]
+  // 选择body中的p元素
+  var p = d3.select('body').selectAll('p')
+  // 绑定数据到选择集
+  var update = p.data(data)
+  // 查看输出结果
+  console.log(update)
+  update.text(d => d)
+  update = p.data([2,4,6,8])
+  console.log(update)
+  update.text(d => d)
+  update.enter().append('p').text(d => d)
+  p = d3.select('body').selectAll('p')
+  update = p.data([1,2])
+  console.log(update)
+  update.text(d => d)
+  update.exit().remove()
+</script>
+</html>

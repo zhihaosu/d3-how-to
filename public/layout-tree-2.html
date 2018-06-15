@@ -21,7 +21,7 @@
 
 	.link {
 		fill: none;
-		stroke: #ccc;
+		stroke: #999;
 		stroke-width: .5px;
 	}
 </style>
@@ -29,13 +29,14 @@
 <body>
 
 	<svg width="800" height="800">
-    <g transform="translate(5, 5)">
+    <g transform="translate(20, 10)">
       <g class="links"></g>
       <g class="nodes"></g>
     </g>
   </svg>
 
 	<script>
+		var color = ['#ff0000', '#ffff00', '#008000']
 		var data = {
 			"name": "A1",
 			"children": [{
@@ -77,7 +78,7 @@
 
 		var root = d3.hierarchy(data)
 		var treeLayout = d3.tree()
-			.size([800, 400])
+			.size([400, 200])
 
 		treeLayout(root)
 		// tree结构数据，增加x,y
@@ -98,7 +99,12 @@
 			.attr('cy', function(d) {
 				return d.x;
 			})
-			.attr('r', 4);
+			.attr('r', d => {
+			  return 8 - d.depth
+			})
+			.style('fill', d => {
+			  return color[d.depth]
+		});
 
 		nodeEnter
 			.append('text')
@@ -106,7 +112,7 @@
 				return d.data.name
 			})
 			.attr('transform', function(d) {
-				return "translate(" + (d.y + 4) + "," + (d.x + 6) + ")"
+				return "translate(" + (d.y - 10) + "," + (d.x + 20) + ")"
 			})
 
 		// Links

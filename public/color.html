@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Starter Kits</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="vendor/highlight/styles/monokai.css"/>
+  <script src="js/jquery.js"></script>
+  <script src="js/d3.v4.js"></script>
+  <script src="vendor/highlight/highlight.pack.js"></script>
+  <script src="js/boot.js"></script>
+  <link rel="stylesheet" href="css/main.css"/>
+
+  <style>
+  </style>
+</head>
+
+<body>
+<div id="container"></div>
+</body>
+<script>
+  var a = d3.rgb(255, 0, 0) // 红色
+  var b = d3.rgb(0, 255, 0) // 绿色
+  var compute = d3.interpolate(a, b)
+  var container = d3.select('#container')
+  container.append('p').text(compute(0)).style('color', compute(0))
+  container.append('p').text(compute(0.2)).style('color', compute(0.2))
+  container.append('p').text(compute(0.5)).style('color', compute(0.5))
+  container.append('p').text(compute(1)).style('color', compute(1))
+</script>
+</html>
