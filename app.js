@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const serveIndex = require('serve-index')
 const opn = require('opn')
 
-const PORT = 9000
+const PORT = 9001
 const app = express()
 
 app.use(compression())

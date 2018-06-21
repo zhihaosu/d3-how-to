@@ -72,11 +72,12 @@
 		console.log(root)
 
 
-		d3.select('svg g')
+		var enter = d3.select('svg g')
 			.selectAll('rect')
 			.data(root.descendants())
 			.enter()
-			.append('rect')
+      .append('g')
+    enter.append('rect')
 			.attr('x', function(d) {
 				return d.x0;
 			})
@@ -89,6 +90,17 @@
 			.attr('height', function(d) {
 				return d.y1 - d.y0;
 			})
+    enter.append('text')
+			.text(d => d.data.name)
+      .attr('x', function(d) {
+        return d.x0;
+      })
+      .attr('y', function(d) {
+        return d.y0;
+      })
+      .attr('dy', function(d) {
+        return '1em';
+      })
 	</script>
 </body>
 
