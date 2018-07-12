@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Starter Kits</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="vendor/highlight/styles/monokai.css"/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <script src="js/d3.v5.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="vendor/highlight/highlight.pack.js"></script>
+  <script src="js/boot.js"></script>
+  <script src="js/lodash.js"></script>
+  <link rel="stylesheet" href="css/main.css"/>
+</head>
+
+<style>
+  html {
+    font-size: 10px;
+  }
+</style>
+
+<body>
+<div style="width: 100%;height: 800px;" id="devChart"></div>
+<script>
+  let chartSetting = {
+    margin: 0,
+    lineTextColor: '#999999',
+    fontSize: 12
+  }
+
+  let relationElementId = ''
+  let relationDataSource = {}
+
+  // 半径计算器
+  let scaledCircle = d3.scaleLinear().domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]).range([10, 7, 6.5, 6, 5.5, 5, 4.5, 4, 3.5, 3])
+
+  let width, height, tree, svg, rootG, zoom, linkBoard, clickEvent, rootBoard, linkRadial, scale, degree
+
+  // 渲染整个页面
+  function render() {
+    width = $(relationElementId).width()
+    height = $(relationElementId).height()
+
+    chartSetting.radiusR = 120
+
+    tree = d3.cluster()
+      .size([360, d3.min([width, height]) / 2 - chartSetting.margin])
+      .separation(function(a, b) {
+        return (a.parent === b.parent ? 1 : 2) / a.depth
+      })
+
+    degree = relationDataSource.items.length === 1 ? 90 : 0
+    // 缩放和移动
+    zoom = d3.zoom()
+      .scaleExtent([0.5, 2])
+      .on('zoom', function() {
+        scale = d3.event.transform.k
+        rootG.attr('transform', d3.event.transform)
+      })
+
+    d3.select(relationElementId).select('svg').remove()
+    // 创建svg容器
+    svg = d3.select(relationElementId).append('svg')
+      .attr('id', 'relation-container')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .call(zoom)
+      .on('dblclick.zoom', () => {
+        if (scale !== 2) {
+          zoom.scaleTo(svg, 2)
+        } else {
+          zoom.scaleTo(svg, 1)
+        }
+      })
+
+    rootG = svg.append('g')
+      .attr('id', 'root-g')
+
+    // 创建树容器，并移动到画布中心点（初始态）
+    rootBoard = rootG
+      .append('g')
+      .attr('id', 'relation-tree-container')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('transform', () => {
+        return `rotate(${degree} ${width / 2} ${height / 2}) translate(${width / 2}, ${height / 2})`
+      })
+
+    linkBoard = rootBoard
+      .append('g')
+      .attr('id', 'link-board')
+
+    linkRadial = d3.linkRadial()
+      .angle(d => d.x / 180 * Math.PI)
+      .radius(d => d.y)
+
+    update()
+  }
+
+  // 局部更新 - 用于用户发生界面交互触发更新
+  function update() {
+    let root = d3.hierarchy(relationDataSource, d => {
+      return d.items
+    })
+
+    // 计算nodes
+    tree(root)
+    let nodes = root.descendants()
+    // patch for d.y
+    nodes.forEach(d => {
+      d.y = chartSetting.radiusR * d.depth
+      if (d.depth !== 0) {
+        if (d.x >= 360) {
+          d.x -= 360
+        } else if (d.x < 0) {
+          d.x += 360
+        }
+      }
+    })
+
+    // 获取所有nodes(其实在d3中并非真正的获取)，挂上data,用于计算enter, update, exit
+    let node = rootBoard.selectAll('.tree-node')
+      .data(nodes)
+
+    // ========================新增节点=======================
+    // 创建svg节点
+    let nodeEnter = node.enter().append('g')
+      .attr('class', 'tree-node')
+      .attr('transform', d => d.parent ? 'rotate(' + (d.x - 90) + ')translate(' + d.y + ')' : '')
+
+    // 这个是可以点击的圆圈
+    nodeEnter.append('circle')
+      .attr('class', d => {
+        if (d.depth === 1 && d.data.items.length > 0) {
+          return 'node-twinkle'
+        }
+      })
+      .attr('r', d => scaledCircle(d.depth) <= 0 ? 1 : scaledCircle(d.depth))
+      .style('stroke', d => {
+        if ((d.depth === 1 && d.data.items.length > 0)) {
+          return d.data.color
+        } else if (d.depth === 2) {
+          return d.parent.data.color
+        } else if (d.depth === 0) {
+          return '#f5573e'
+        } else {
+          return '#dcdcdc'
+        }
+      })
+      .style('stroke-width', '2px')
+      .style('fill', d => {
+        if ((d.depth === 1 && d.data.items.length > 0)) {
+          return d.data.color
+        } else if (d.depth === 2) {
+          return d.parent.data.color
+        } else if (d.depth === 0) {
+          return '#f5573e'
+        } else {
+          return '#dcdcdc'
+        }
+      })
+
+    // 这个是文字（公司名称）
+    nodeEnter.append('text')
+      .attr('title', 'title')
+      .attr('dy', d => d.data.category === 0 ? '-1.5em' : '.31em')
+      .attr('dx', d => d.data.category === 0 ? '-' + d.data.ename.length * 0.7 + 'em' : 0)
+      .attr('class', d => {
+        let className = 'tree-title'
+        let reasons = ['安全事故', '偷税漏税', '重大事件', '破产暂停', '收购重组']
+        if ((d.depth === 0) || (d.depth === 2) || (d.depth === 1 && (d.data.items.length > 0 || d.data.count > 0 || (d.data.ename.split('（')[1] && +d.data.ename.split('（')[1].split('）')[0] > 0)) && reasons.indexOf(d.data.reason) > -1)) {
+          className += ' tree-click'
+        }
+        return className
+      })
+      .style('font-size', d => {
+        if (d.depth === 0) {
+          return '12px'
+        }
+      })
+      .attr('text-anchor', d => {
+        if (degree === 0) {
+          return d.parent ? (d.x < 180 ? 'start' : 'end') : 'start'
+        } else {
+          return d.parent ? (d.x > 90 && d.x < 270) ? 'end' : 'start' : 'start'
+        }
+      })
+      .attr('transform', d => {
+        if (degree === 0) {
+          if (d.parent) {
+            return d.x < 180 ? `translate(${scaledCircle(0)})` : `rotate(180)translate(${-(scaledCircle(0))})`
+          } else {
+            return `translate(${scaledCircle(0)})`
+          }
+        } else {
+          if (d.parent) {
+            return (d.x > 90 && d.x < 270) ? `rotate(180)translate(${-(scaledCircle(0))})` : `translate(${scaledCircle(0)})`
+          } else {
+            return `rotate(-90)translate(${scaledCircle(0)})`
+          }
+        }
+      })
+      .text(d => {
+        if (d.depth > 0) {
+          return d.data.ename
+        }
+      })
+      .on('click', d => {
+        if ((d.depth === 0 && d.data.id !== '-') || (d.depth === 2 && d.data.eid !== '-') || (d.depth === 1 && (d.data.ename.split('（')[1] && +d.data.ename.split('（')[1].split('）')[0] > 0))) {
+          clickEvent(d)
+        }
+      })
+
+    d3.selectAll('.tree-title')
+      .filter(d => d.depth < 1)
+      .each(function(d) {
+        let text = d3.select(this)
+        let textList = []
+
+        let nodeName = d.data.ename
+
+        if (nodeName.length > 7) {
+          let j = 0
+          while (j < nodeName.length) {
+            if (j + 5 >= nodeName.length) {
+              textList.push(nodeName.substring(j))
+            } else {
+              textList.push(nodeName.substring(j, j + 7))
+            }
+            j = j + 7
+          }
+        } else {
+          textList.push(nodeName)
+        }
+        text.selectAll('tspan')
+          .data(textList)
+          .enter()
+          .append('tspan')
+          .attr('x', '.3em')
+          .attr('dy', function(d, i) {
+            let dy
+            if (i === 0) {
+              dy = 0.3 - i * 0.4 + 'em'
+            } else {
+              dy = '1.1em'
+            }
+            return dy
+          })
+          .style('font-size', '12px')
+          .text(d => {
+            return d
+          })
+      })
+    // ========================删除节点=======================
+    node.exit().remove()
+
+    // ========================新增路径=======================
+    // --------画线开始--------
+    let links = root.links()
+
+    let d3Links = linkBoard
+      .selectAll('line')
+      .data(links)
+
+    // link enter
+    d3Links
+      .enter()
+      .append('path')
+      .attr('class', 'link')
+      .attr('stroke', d => {
+        if ((d.target.depth === 1 && d.target.data.items.length > 0)) {
+          return d.target.data.color
+        } else if (d.target.depth === 2) {
+          return d.target.parent.data.color
+        } else {
+          return '#dedede'
+        }
+      })
+      .attr('stroke-width', '0.5px')
+      .attr('fill', 'none')
+      .attr('d', linkRadial)
+    // .attr('x1', d => d.source.parent ? Math.cos((d.source.x - 90) / 180 * Math.PI) * d.source.y : 0)
+    // .attr('y1', d => d.source.parent ? Math.sin((d.source.x - 90) / 180 * Math.PI) * d.source.y : 0)
+    // .attr('x2', d => Math.cos((d.target.x - 90) / 180 * Math.PI) * d.target.y)
+    // .attr('y2', d => Math.sin((d.target.x - 90) / 180 * Math.PI) * d.target.y)
+
+    // link update
+    d3Links.attr('d', linkRadial)
+    // .attr('x1', d => d.source.parent ? Math.cos((d.source.x - 90) / 180 * Math.PI) * d.source.y : 0)
+    // .attr('y1', d => d.source.parent ? Math.sin((d.source.x - 90) / 180 * Math.PI) * d.source.y : 0)
+    // .attr('x2', d => Math.cos((d.target.x - 90) / 180 * Math.PI) * d.target.y)
+    // .attr('y2', d => Math.sin((d.target.x - 90) / 180 * Math.PI) * d.target.y)
+
+    // link remove
+    d3Links.exit().remove()
+  }
+
+  function init(id, data, fn) {
+    relationElementId = '#' + id
+    relationDataSource = data
+    clickEvent = fn
+    render()
+  }
+
+  d3.json('data/cluster.json')
+    .then(data => {
+      init('devChart', data, d => {
+        console.log(d)
+      })
+    })
+
+</script>
+</body>
+
+</html>

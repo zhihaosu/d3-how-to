@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Starter Kits</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="vendor/highlight/styles/monokai.css"/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <script src="js/d3.v5.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="vendor/highlight/highlight.pack.js"></script>
+  <script src="js/boot.js"></script>
+  <script src="js/lodash.js"></script>
+  <link rel="stylesheet" href="css/main.css"/>
+</head>
+
+<style>
+</style>
+
+<body>
+<div style="width: 100%" id="devChart"></div>
+<script>
+  // =============================== chart settings ===============================
+  const linkWidth = 1 // 连线宽度
+  const linkColor = '#979797' // 连线颜色
+  const fontColor = '#333333' // 字体颜色
+  const fontSizeTitle = 14 // 公司名字体大小
+  const fontSizeText = 12 // 认缴金额字体大小(firefox min font size is 12px )
+  const textTopBlank = 7 // 节点内padding
+  const textLeftBlank = 10 // 节点内padding
+  const fontSizePercent = 12 // 股比文字大小
+  const fontColorPercent = '#65A1EA' // 股比文字颜色
+
+  const borderWidth = 1 // 边框宽度
+  const borderColor = '#D6D6D6' // 边框颜色
+  const borderBottomWidth = 4 // 底部边框宽度
+  const borderColorCompany = '#65A1EA' // 公司边框颜色
+  const borderColorPerson = '#F0A23A' // 人边框颜色
+  const percentHeight = 20
+
+  const circleR = 7
+
+  const floatBarWidth = 150 // 节点左右距离
+  const floatBarHeight = 200 // 节点上下距离
+  const barWidth = 132 // 节点宽度
+  const barHeight = 64 // 节点高度
+  const centerFontSize = 17 // 根节点字体大小
+  const centerHeight = 40 // 根节点高度
+  const barRadius = 2 // 节点圆角
+  const duration = 500 // 动画时间
+
+  // =============================== chart settings ===============================
+
+  let elementId = ''
+  let svg = null // 视图容器
+  let moveG = null // 移动容器
+  let rootG = null // 画布容器
+  let rootTop = null // 上半部画布
+  let rootBottom = null // 下半部画布
+
+  let dataCenter = {}
+  let dataTop = {}
+  let dataBottom = {}
+
+  let svgWidth = 0 // 容器宽度
+  let svgHeight = 0
+  let ht // 上半部分容器高度
+  let hb // 下半部分容器高度
+  let svgPadding = 100 // 上下各留100px供缩放
+
+  let maxOffset = 0 // 节点左右最大偏移(根节点并不一定在中心点)
+
+  function render() {
+    svgWidth = $(elementId).width()
+
+    d3.select(elementId).select('svg').remove()
+    svg = d3.select(elementId).append('svg:svg')
+      .attr('width', '100%')
+      .attr('id', 'structureChart')
+      .style('transition', `height ${duration}ms ease-in-out`)
+      .classed('new-network-rect', true)
+
+    svg.append('defs') // 定义arrowOut，为svg绘制箭头
+      .append('marker')
+      .attr('id', 'arrow')
+      .attr('viewBox', '0 0 12 12')
+      .attr('markerUnits', 'strokeWidth')
+      .attr('refX', 11)
+      .attr('refY', 6)
+      .attr('markerWidth', 24)
+      .attr('markerHeight', 24)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M2,2 L10,6 L2,10 L6,6 L2,2')
+      .attr('fill', linkColor)
+    svg.append('defs') // 定义arrowOut，为svg绘制箭头
+      .append('marker')
+      .attr('id', 'arrowCompany')
+      .attr('viewBox', '0 0 12 12')
+      .attr('markerUnits', 'strokeWidth')
+      .attr('refX', 11)
+      .attr('refY', 6)
+      .attr('markerWidth', 24)
+      .attr('markerHeight', 24)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M2,2 L10,6 L2,10 L6,6 L2,2')
+      .attr('fill', borderColorCompany)
+    svg.append('defs') // 定义arrowOut，为svg绘制箭头
+      .append('marker')
+      .attr('id', 'arrowPerson')
+      .attr('viewBox', '0 0 12 12')
+      .attr('markerUnits', 'strokeWidth')
+      .attr('refX', 11)
+      .attr('refY', 6)
+      .attr('markerWidth', 24)
+      .attr('markerHeight', 24)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M2,2 L10,6 L2,10 L6,6 L2,2')
+      .attr('fill', borderColorPerson)
+
+    moveG = svg.append('svg:g') // 移动容器，用于移动缩放
+    rootG = moveG.append('svg:g') // 根容器
+      .attr('id', 'structureChartContainer')
+    rootTop = rootG.append('svg:g').classed('topG', true) // 股东tree
+      .style('transition', `transform ${duration}ms ease-in-out`)
+    rootTop.append('svg:g').classed('topGLinks', true) // 用于渲染links
+    rootTop.append('svg:g').classed('topGNodes', true) // 用于渲染nodes, 放在link下面避免节点被连线覆盖
+    rootBottom = rootG.append('svg:g').classed('bottomG', true) // 对外投资tree
+      .style('transition', `transform ${duration}ms ease-in-out`)
+    rootBottom.append('svg:g').classed('bottomGLinks', true)
+    rootBottom.append('svg:g').classed('bottomGNodes', true)
+    rootG.append('svg:g').classed('centerG', true)
+      .style('transition', `transform ${duration}ms ease-in-out`)
+    svg.call(d3.zoom()
+      .scaleExtent([1, 1])
+      .on('zoom', () => {
+        moveG.attr('transform', d3.event.transform)
+      }))
+    update()
+  }
+
+  function update(source) {
+    maxOffset = 0
+
+    let nodeTop = d3.hierarchy(dataTop)
+    let nodeBottom = d3.hierarchy(dataBottom)
+
+    // 计算最大节点数
+    let {maxDepth: topDepth} = getMaxNum(nodeTop.descendants())
+    let {maxDepth: bottomDepth} = getMaxNum(nodeBottom.descendants())
+
+    // 计算画布高度
+    ht = floatBarHeight * topDepth
+    hb = floatBarHeight * bottomDepth
+    svgHeight = ht + hb + barHeight + svgPadding * 2
+    svg.attr('height', svgHeight)
+
+    // 偏移到中间
+    rootG
+      .style('transform-origin', '0 center 0')
+      .attr('transform', `translate(${svgWidth / 2}, 0)`)
+
+    updateTop(ht, source)
+    updateBottom(hb, ht, source)
+    updateCenter()
+
+    /**
+     * 渲染上半部分节点
+     */
+    function updateTop(h, source) {
+      let treeLayoutT = d3.tree().nodeSize([floatBarWidth, floatBarHeight])
+      treeLayoutT(nodeTop)
+      rootTop.attr('transform', `translate(0, ${barHeight / 2 + svgPadding})`)
+      let nodes = nodeTop.descendants()
+      if (!source) {
+        source = {
+          x0: nodes[0].x,
+          y0: h - nodes[0].y,
+          x: nodes[0].x,
+          y: h - nodes[0].y
+        }
+      }
+      // 旋转节点
+      nodes.forEach(o => {
+        o.y = h - o.y
+        if (o.data.identifier === source.identifier) {
+          source.x = o.x
+          source.y = o.y
+        }
+        if (o.x < 0 && o.x < maxOffset) {
+          maxOffset = o.x
+        }
+      })
+      updateLinks(rootTop.select('.topGLinks'), nodeTop, -1, source)
+      updateNodes(rootTop.select('.topGNodes'), nodes, -1, source)
+    }
+
+    /**
+     * 渲染下半部分节点
+     */
+    function updateBottom(h, offset, source) {
+      let treeLayoutB = d3.tree().nodeSize([floatBarWidth, floatBarHeight])
+      treeLayoutB(nodeBottom)
+      rootBottom.attr('transform', `translate(0, ${offset + barHeight / 2 + svgPadding})`)
+      let nodes = nodeBottom.descendants()
+      if (!source) {
+        source = {
+          x0: nodes[0].x,
+          y0: nodes[0].y,
+          x: nodes[0].x,
+          y: nodes[0].y
+        }
+      }
+      nodes.forEach(o => {
+        if (o.data.identifier === source.identifier) {
+          source.x = o.x
+          source.y = o.y
+        }
+        if (o.x < 0 && o.x < maxOffset) {
+          maxOffset = o.x
+        }
+      })
+      updateLinks(rootBottom.select('.bottomGLinks'), nodeBottom, 1, source)
+      updateNodes(rootBottom.select('.bottomGNodes'), nodes, 1, source)
+    }
+
+    /**
+     * 渲染父节点
+     */
+    function updateCenter() {
+      let nodeCenter = d3.hierarchy(dataCenter)
+      let rootCenter = rootG.select('.centerG')
+        .attr('transform', `translate(0, ${ht + barHeight / 2 + svgPadding})`)
+      let str = dataCenter.name
+      let dNameWidth = getTextWidth(str, centerFontSize)
+      let centerWidth = dNameWidth + 15 * 2
+      // 当节点数量过小导致树宽度小于根节点宽度是，需要弥补误差
+      if (-centerWidth / 2 < maxOffset - barWidth / 2) {
+        maxOffset = (barWidth - centerWidth) / 2
+      }
+      let nodeEnter = rootCenter
+        .selectAll('rect')
+        .data(nodeCenter.descendants())
+        .enter()
+      nodeEnter
+        .append('svg:rect')
+        .attr('x', -centerWidth / 2)
+        .attr('y', -centerHeight / 2)
+        .attr('width', centerWidth)
+        .attr('height', centerHeight)
+        .style('fill', borderColorCompany)
+        .attr('rx', '3px')
+        .attr('ry', '3px')
+      nodeEnter
+        .append('svg:text')
+        .attr('x', 0)
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.35em')
+        .text(d => d.data.name)
+        .style('font-size', centerFontSize + 'px')
+        .style('cursor', 'pointer')
+        .attr('fill', '#ffffff')
+        // .on('click', callbackEvent)
+    }
+
+    /**
+     * 更新link
+     * @param root
+     * @param rootNode
+     * @param direction
+     * @param source
+     */
+    function updateLinks(root, rootNode, direction, source) {
+      // Links
+      let linkVertical = d3.linkVertical()
+        .x(d => d.x)
+        .y(d => d.y)
+      let link = root
+        .selectAll('path.structure-link')
+        .data(rootNode.links(), d => d.target.data.identifier)
+      link.enter()
+        .append('path')
+        .attr('class', d => `structure-link link-${d.target.data.identifier} ${d.target.data.eid && d.target.data.eid !== 'null' ? 'company' : 'person'}`)
+        .style('fill', 'none')
+        .attr('d', () => {
+          let o = {x: source.x0, y: source.y0}
+          return linkVertical({source: o, target: o})
+        })
+        .style('stroke', linkColor)
+        .style('stroke-width', linkWidth)
+        .transition()
+        .ease(d3.easeQuad)
+        .duration(duration)
+        .attr('d', d => {
+          let o = {
+            source: {
+              x: d.source.x,
+              y: d.source.y + direction * (d.source.depth === 0 ? centerHeight / 2 : (direction === 1 ? (barHeight / 2 + borderBottomWidth + circleR) : (barHeight / 2 + circleR)))
+            },
+            target: {
+              x: d.target.x,
+              y: d.target.y - direction * ((direction === 1 ? barHeight / 2 : barHeight / 2 + borderBottomWidth) + percentHeight)
+            }
+          }
+          return linkVertical(o)
+        })
+      // update position
+      link
+        .transition()
+        .duration(duration)
+        .ease(d3.easeQuad)
+        .attr('d', d => {
+          let o = {
+            source: {
+              x: d.source.x,
+              y: d.source.y + direction * (d.source.depth === 0 ? centerHeight / 2 : (direction === 1 ? (barHeight / 2 + borderBottomWidth + circleR) : (barHeight / 2 + circleR)))
+            },
+            target: {
+              x: d.target.x,
+              y: d.target.y - direction * ((direction === 1 ? barHeight / 2 : barHeight / 2 + borderBottomWidth) + percentHeight)
+            }
+          }
+          return linkVertical(o)
+        })
+      link.exit()
+        .transition()
+        .duration(duration)
+        .ease(d3.easeQuad)
+        .attr('d', () => {
+          let o = {x: source.x, y: source.y + direction * barHeight / 2}
+          return linkVertical({source: o, target: o})
+        })
+        .remove()
+    }
+
+    /**
+     * 更新nodes
+     * @param root
+     * @param nodes
+     * @param direction
+     * @param source
+     */
+    function updateNodes(root, nodes, direction, source) {
+      let node = root
+        .selectAll('g.structure-node')
+        .data(nodes, d => d.data.identifier)
+      // 父节点不渲染
+      let nodeEnter = node
+        .enter()
+        .filter(d => d.depth !== 0)
+        .append('svg:g')
+        .attr('class', d => `structure-node node${d.data.identifier}`)
+        .attr('transform', () => `translate(${source.x0}, ${source.y0})`)
+        .style('cursor', 'default')
+        .on('mouseover', d => {
+          let identifier = d.data.identifier
+          let selector = `.link-${identifier},.border-${identifier}`
+          let countAllPath = o => {
+            let identifierP = o.data.identifier
+            selector += `,.link-${identifierP},.border-${identifierP}`
+            if (o.parent) {
+              countAllPath(o.parent)
+            }
+          }
+          countAllPath(d)
+          let allNodes = d3.selectAll(selector)
+            .classed('active', true)
+          allNodes
+            .filter('.mark.company')
+            .attr('marker-end', 'url(#arrowCompany)')
+          allNodes
+            .filter('.mark.person')
+            .attr('marker-end', 'url(#arrowPerson)')
+          d.data._selector = selector
+        })
+        .on('mouseleave', d => {
+          let allNodes = d3.selectAll(d.data._selector)
+            .classed('active', false)
+          allNodes
+            .filter('.mark')
+            .attr('marker-end', 'url(#arrow)')
+        })
+      nodeEnter
+        .append('svg:rect')
+        .attr('x', -barWidth / 2)
+        .attr('y', -barHeight / 2)
+        .attr('width', barWidth)
+        .attr('height', barHeight)
+        .attr('rx', barRadius)
+        .attr('ry', barRadius)
+        .style('stroke', borderColor)
+        .style('stroke-width', borderWidth)
+        .style('fill', '#ffffff')
+        .attr('class', d => `structure-border border-${d.data.identifier} ${d.data.eid && d.data.eid !== 'null' ? 'company' : 'person'}`)
+      nodeEnter
+        .append('svg:rect')
+        .attr('x', -barWidth / 2 - borderWidth / 2)
+        .attr('y', barHeight / 2 - borderWidth / 2)
+        .attr('width', barWidth + borderWidth)
+        .attr('height', borderBottomWidth)
+        .style('fill', d => {
+          if (d.data.eid && d.data.eid !== 'null') {
+            return borderColorCompany
+          } else {
+            return borderColorPerson
+          }
+        })
+      addText(nodeEnter, direction)
+      updateCircle(nodeEnter, direction)
+      // update position
+      let nodeUpdate = root.selectAll('g.structure-node')
+      nodeUpdate.transition()
+        .duration(duration)
+        .ease(d3.easeQuad)
+        .attr('transform', d => {
+          return `translate(${d.x}, ${d.y})`
+        })
+      nodeUpdate.selectAll('text')
+        .transition()
+        .duration(duration)
+        .ease(d3.easeQuad)
+        .style('fill-opacity', 1)
+      // Transition exiting nodes to the parent's new position.
+      let nodeExit = node.exit()
+      nodeExit
+        .transition()
+        .duration(duration)
+        .ease(d3.easeQuad)
+        .attr('transform', () => {
+          return 'translate(' + source.x + ',' + source.y + ')'
+        })
+        .remove()
+
+      nodeExit
+        .select('circle')
+        .attr('r', 1e-6)
+
+      nodeExit
+        .selectAll('text')
+        .transition()
+        .duration(duration)
+        .ease(d3.easeQuad)
+        .style('fill-opacity', 1e-6)
+
+      // Stash the old positions for transition.
+      nodes.forEach(d => {
+        d.data.x0 = d.x
+        d.data.y0 = d.y
+      })
+    }
+
+    /**
+     * 添加文字
+     * @param nodeEnter
+     * @param direction
+     */
+    function addText(nodeEnter, direction) {
+      // 公司名称
+      nodeEnter
+        .append('svg:text')
+        .text(d => {
+          let str = d.data.name
+          let dNameWidth = getTextWidth(str, fontSizeTitle)
+          let blank = textLeftBlank * 2
+          let allWidth = dNameWidth + blank
+          if (allWidth > barWidth) {
+            let maxLength = Math.ceil((barWidth - blank) / (dNameWidth / str.length))
+            str = d.data.name.substring(0, maxLength)
+            d.data._subName = d.data.name.substring(maxLength)
+          }
+          return str
+        })
+        .attr('x', textLeftBlank - barWidth / 2)
+        .attr('y', textTopBlank - barHeight / 2)
+        .attr('dy', fontSizeTitle)
+        .style('fill-opacity', 1e-6)
+        .style('font-size', fontSizeTitle + 'px')
+        .attr('fill', fontColor)
+        .attr('font-weight', 500)
+        .style('cursor', d => {
+          if (d.data.eid && d.data.eid !== 'null') {
+            return 'pointer'
+          }
+        })
+        .on('mouseover', function (d) {
+          if (d.data.eid && d.data.eid !== 'null') {
+            d3.select(this).attr('font-weight', 600)
+          }
+        })
+        .on('mouseleave', function (d) {
+          if (d.data.eid && d.data.eid !== 'null') {
+            d3.select(this).attr('font-weight', 500)
+          }
+        })
+        // .on('click', callbackEvent)
+        .filter(d => !!d.data._subName)
+        .append('tspan')
+        .attr('x', textLeftBlank - barWidth / 2)
+        .attr('dy', '1.35em')
+        .attr('fill', fontColor)
+        .text(d => {
+          let str = d.data._subName
+          let dNameWidth = getTextWidth(str, fontSizeTitle)
+          let blank = textLeftBlank * 2
+          let allWidth = dNameWidth + blank
+          if (allWidth > barWidth) {
+            str = str.substring(0, Math.ceil((barWidth - blank) / (dNameWidth / str.length)) - 2) + '...'
+          }
+          return str
+        })
+      // 认缴金额
+      nodeEnter
+        .filter(d => d.data.amount)
+        .append('svg:text')
+        .text(d => {
+          let str = parseFloat(d.data.amount) ? parseFloat(d.data.amount).toFixed(1) : '***'
+          if (d.data.amount) {
+            let index = d.data.amount.indexOf('shares')
+            if (index === -1) {
+              str = `认缴金额：${str}万元`
+            } else if (index !== -1) {
+              str = `持股数：${str}万股`
+            }
+          }
+          let dNameWidth = getTextWidth(str, fontSizeText)
+          let blank = textLeftBlank * 2
+          let allWidth = dNameWidth + blank
+          if (allWidth > barWidth) {
+            str = str.substring(0, Math.ceil((barWidth - blank) / (dNameWidth / str.length) - 1)) + '...'
+          }
+          return str
+        })
+        .attr('x', textLeftBlank - barWidth / 2)
+        .attr('y', barHeight / 2 - textTopBlank)
+        .style('fill-opacity', 1e-6)
+        .style('font-size', fontSizeText + 'px')
+        .attr('fill', fontColor)
+      // 股比
+      let nodeEnterPercent = nodeEnter.filter(d => d.data.percent)
+      nodeEnterPercent
+        .filter(d => !d.data.hidePercent)
+        .append('svg:text')
+        .text(d => `${(d.data.percent * 100).toFixed(2)}%`)
+        .style('font-size', fontSizePercent + 'px')
+        .attr('fill', fontColorPercent)
+        .attr('x', 0)
+        .attr('y', () => {
+          const padding = 5
+          if (direction === 1) {
+            return -barHeight / 2 - padding
+          } else {
+            return barHeight / 2 + borderBottomWidth + padding
+          }
+        })
+        .attr('dx', 10)
+        .attr('dy', direction === 1 ? '' : '1em')
+      let percentText = nodeEnterPercent
+        .append('svg:text')
+        .style('font-size', fontSizePercent + 'px')
+        .attr('fill', fontColorPercent)
+        .attr('y', () => {
+          const padding = 5
+          if (direction === 1) {
+            return -barHeight / 2 - padding
+          } else {
+            return barHeight / 2 + borderBottomWidth + padding
+          }
+        })
+        .attr('dy', direction === 1 ? '' : '1em')
+      percentText
+        .filter(d => !d.data.hidePercent)
+        .text('持股')
+        .attr('x', -35)
+      percentText
+        .filter(d => d.data.hidePercent)
+        .text('查看股比')
+        .attr('x', -58)
+        .style('cursor', 'pointer')
+        .on('click', d => {
+          // toggleEvent && toggleEvent(d, 'percent')
+        })
+      // 股比的线和箭头
+      let nodePercent = nodeEnter
+        .append('g')
+        .attr('transform', `translate(0, ${direction === 1 ? (-barHeight / 2 - percentHeight) : (barHeight / 2 + borderBottomWidth)})`)
+      nodePercent
+        .append('path')
+        .attr('d', () => {
+          let lineGenerator = d3.line()
+          return lineGenerator([[0, 0], [0, percentHeight]])
+        })
+        .attr('class', d => `structure-link mark link-${d.data.identifier} ${d.data.eid && d.data.eid !== 'null' ? 'company' : 'person'}`)
+        .style('stroke', linkColor)
+        .style('stroke-width', linkWidth)
+        .attr('marker-end', 'url(#arrow)')
+    }
+
+    /**
+     * 添加展开/收起按钮
+     * @param nodeEnter
+     * @param direction
+     */
+    function updateCircle(nodeEnter, direction) {
+      let nodeCircle = nodeEnter
+        .filter(d => (d.data.items && d.data.items.length) || d.data.hideNodes)
+        .append('g')
+        .style('cursor', 'pointer')
+        .classed('circle', true)
+        .on('click', d => {
+          // toggleEvent && toggleEvent(d, 'circle')
+          if (!d.data.hideNodes) {
+            toggleNode(d)
+            update({
+              identifier: d.data.identifier,
+              x0: d.data.x0,
+              y0: d.data.y0
+            })
+          }
+        })
+        .attr('transform', `translate(0, ${direction * barHeight / 2 + direction * (circleR + (direction === 1 ? borderBottomWidth : 0))})`)
+      nodeCircle
+        .append('circle')
+        .attr('r', circleR)
+        .style('stroke', borderColorCompany)
+        .style('stroke-width', '1px')
+        .style('fill', borderColorCompany)
+        .classed('node-twinkle', true)
+      nodeCircle
+        .append('line')
+        .attr('x1', -4)
+        .attr('y1', 0)
+        .attr('x2', 4)
+        .attr('y2', 0)
+        .style('stroke', '#ffffff')
+        .style('stroke-width', '1px')
+      nodeCircle
+        .append('line')
+        .attr('class', 'vertical-line')
+        .attr('x1', 0)
+        .attr('y1', -4)
+        .attr('x2', 0)
+        .attr('y2', 4)
+        .style('stroke', '#ffffff')
+        .style('stroke-width', '1px')
+      rootG
+        .selectAll('.vertical-line')
+        .attr('visibility', d => {
+          if (d.data.children) {
+            return 'hidden'
+          } else {
+            return ''
+          }
+        })
+    }
+  }
+
+  function getMaxNum(nodes) {
+    let maxDepth = 0
+    for (let node of nodes) {
+      let depth = node.depth
+      if (depth > maxDepth) {
+        maxDepth = depth
+      }
+    }
+    return {maxDepth}
+  }
+
+  function getTextWidth(text, fontSize) {
+    let textWidth = 0
+    fontSize = fontSize || 14
+    if (text && text.length > 0) {
+      let numCount = 0
+      let symbolCount = 0
+      let smallLetterCount = 0
+      let bigLetterCount = 0
+      let numMatch = text.match(/[0-9]/g)
+      let symbolMatch = text.match(/[.:,\s()]/g)
+      let smallLetterMatch = text.match(/[a-z]/g)
+      let bigLetterMatch = text.match(/[A-Z]/g)
+      if (numMatch) {
+        numCount = numMatch.length
+        textWidth += numCount * 8.2
+      }
+      if (symbolMatch) {
+        symbolCount = symbolMatch.length
+        textWidth += symbolCount * 3.2
+      }
+      if (smallLetterMatch) {
+        smallLetterCount = smallLetterMatch.length
+        textWidth += smallLetterCount * 7.54
+      }
+      if (bigLetterMatch) {
+        bigLetterCount = bigLetterMatch.length
+        textWidth += bigLetterCount * 9.35
+      }
+      textWidth += (text.length - numCount - symbolCount - smallLetterCount - bigLetterCount) * fontSize
+    }
+    return textWidth
+  }
+
+  /**
+   * 展开/收起节点
+   * @param d
+   */
+  function toggleNode(d) {
+    if (d.data.children) {
+      d.data.children = null
+    } else {
+      d.data.children = d.data.items
+    }
+  }
+
+  function init(id, {pTrees, cTrees, ...root}) {
+    elementId = `#${id}`
+    dataCenter = root
+    dataTop = {
+      ...dataCenter,
+      children: pTrees
+    }
+    dataBottom = {
+      ...dataCenter,
+      children: cTrees
+    }
+    render()
+  }
+
+  d3.json('data/tree2.json')
+    .then(data => {
+      let formattedData = {}
+      formattedData.category = 0
+      formattedData.eid = data.eid === 'null' ? '' : data.eid
+      formattedData.name = data.name
+      formattedData.hasProblem = data.has_problem !== '0'
+      formattedData.children = null
+      formattedData.identifier = data.identifier
+      formattedData.pTrees = data.p_trees
+      formattedData.cTrees = data.c_trees
+      init('devChart', formattedData)
+    })
+    .catch(err => {
+      console.log(err)
+    })
+
+</script>
+</body>
+
+</html>

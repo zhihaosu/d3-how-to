@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Starter Kits</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="vendor/highlight/styles/monokai.css"/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <script src="js/d3.v5.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="vendor/highlight/highlight.pack.js"></script>
+  <script src="js/boot.js"></script>
+  <script src="js/lodash.js"></script>
+  <link rel="stylesheet" href="css/main.css"/>
+</head>
+
+<style>
+</style>
+
+<body>
+<div style="width: 100%" id="devChart"></div>
+<script>
+  // =============================== chart settings ===============================
+  const minSvgHeight = 600
+  const barWidth = 315
+  const barHeight = 45
+  const borderColor = '#e3e3e3'
+  const linkColor = '#e3e3e3'
+  const linkColorHover = '#979797'
+  const borderColorHover = '#e59d86'
+  const borderWidth = 1
+  const floatBarWidth = 435
+  const floatBarHeight = 70
+  const linkWidth = 1
+  const duration = 500
+  const borderLeftWidth = 4 // 左边边框宽度
+  const circleR = 7
+  const padding = 7
+  const bankColor = '#D0EEDD'
+  // =============================== chart settings ===============================
+
+  let elementId = ''
+  let svg = null // 视图容器
+  let rootG = null // 画布容器
+  let moveG = null // 移动/缩放容器
+
+  let dataRoot = {}
+  let clickEvent = null
+  let tooltip, rootWidth
+
+
+  function render() {
+    d3.select(elementId).select('svg').remove()
+    svg = d3.select(elementId).append('svg:svg').attr('width', '100%').style('transition', `all ${duration}ms ease-in-out`)
+    moveG = svg.append('svg:g')
+    svg.call(d3.zoom()
+      .scaleExtent([1, 1])
+      .on('zoom', () => {
+        moveG.attr('transform', d3.event.transform)
+      }))
+    rootG = moveG.append('svg:g').style('transition', `all ${duration}ms ease-in-out`)
+    rootG.append('svg:g').classed('g-links', true)
+    rootG.append('svg:g').classed('g-nodes', true) // 用于渲染nodes, 放在link下面避免节点被连线覆盖
+    rootWidth = getTextWidth(dataRoot.name, 12) + borderLeftWidth + padding * 2
+    update()
+  }
+
+  function update(source) {
+    let nodeRoot = d3.hierarchy(dataRoot)
+    let layout = d3.tree().nodeSize([floatBarHeight, floatBarWidth])
+    layout(nodeRoot)
+    let nodes = nodeRoot.descendants()
+
+    // 找到最高的节点
+    let topNodeY = 0
+    let bottomNodeY = 0
+    nodes.forEach(o => {
+      if (o.depth !== 0) {
+        o.y -= barWidth - rootWidth // 由于根节点变短了，所有节点左移
+      }
+      if (o.x < topNodeY) {
+        topNodeY = o.x
+      }
+      if (o.x > bottomNodeY) {
+        bottomNodeY = o.x
+      }
+    })
+    let svgHeight = bottomNodeY - topNodeY + barHeight
+    if (svgHeight < minSvgHeight) {
+      svg.attr('height', minSvgHeight)
+      // 偏移到中间
+      rootG
+        .attr('transform', `translate(${barWidth / 2}, ${barHeight - topNodeY + (minSvgHeight - svgHeight - barHeight) / 2})`)
+    } else {
+      svg.attr('height', svgHeight)
+      // 偏移到中间
+      rootG
+        .attr('transform', `translate(${barWidth / 2}, ${-topNodeY + barHeight / 2})`)
+    }
+
+    // 设置动画起点
+    if (!source) {
+      source = {
+        x0: nodes[0].x,
+        y0: nodes[0].y,
+        x: nodes[0].x,
+        y: nodes[0].y
+      }
+    }
+    nodes.forEach(o => {
+      if (o.data.identifier === source.identifier) {
+        source.x = o.x
+        source.y = o.y
+      }
+    })
+
+    /* ================================= 渲染node开始 ======================================= */
+    let node = rootG.select('.g-nodes')
+      .selectAll('g.node')
+      .data(nodes, d => d.data.identifier)
+    let nodeEnter = node
+      .enter()
+      .append('svg:g')
+      .attr('class', d => `node node-${d.data.identifier}`)
+      .attr('transform', () => `translate(${source.y0}, ${source.x0})`)
+    addContent(nodeEnter)
+    // update position
+    let nodeUpdate = rootG.select('.g-nodes').selectAll('g.node')
+    nodeUpdate
+      .transition()
+      .duration(duration)
+      .ease(d3.easeQuad)
+      .attr('transform', d => {
+        return `translate(${d.y}, ${d.x})`
+      })
+    // nodeUpdate.selectAll('text')
+    //   .transition()
+    //   .duration(duration)
+    //   .ease(d3.easeQuad)
+    //   .style('fill-opacity', 1) // ie9不支持，放弃
+    // Transition exiting nodes to the parent's new position.
+    let nodeExit = node.exit()
+    nodeExit
+      .transition()
+      .duration(duration)
+      .ease(d3.easeQuad)
+      .attr('transform', () => {
+        return 'translate(' + source.y + ',' + source.x + ')'
+      })
+      .remove()
+    nodeExit
+      .select('circle')
+      .attr('r', 1e-6)
+    nodeExit
+      .selectAll('text')
+      .transition()
+      .duration(duration)
+      .ease(d3.easeQuad)
+    // .style('fill-opacity', 1e-6) // ie9不支持，放弃
+    nodes.forEach(d => {
+      d.data.x0 = d.x
+      d.data.y0 = d.y
+    })
+    /* ================================= 渲染node结束 ======================================= */
+
+    /* ================================= 渲染link开始 ======================================= */
+    let linkHorizontal = d3.linkHorizontal()
+      .x(d => d.y)
+      .y(d => d.x)
+    let links = rootG.select('.g-links')
+      .selectAll('path.link')
+      .data(nodeRoot.links(), d => d.target.data.identifier)
+
+    links.enter()
+      .append('path')
+      .attr('class', d => `link link-${d.target.data.identifier}`)
+      .style('fill', 'none')
+      .attr('d', () => {
+        let o = {x: source.x0, y: source.y0}
+        return linkHorizontal({source: o, target: o})
+      })
+      // .attr('transform', `translate(-${deltaLeft}, 0)`) // 用于渲染links
+      .style('stroke', linkColor)
+      .style('stroke-width', linkWidth + 'px')
+      .transition()
+      .ease(d3.easeQuad)
+      .duration(duration)
+      .attr('d', d => {
+        let o = {
+          source: {
+            x: d.source.x,
+            y: d.source.y + (d.source.depth === 0 ? (rootWidth - barWidth / 2) : barWidth / 2)
+          },
+          target: {
+            x: d.target.x,
+            y: d.target.y - barWidth / 2
+          }
+        }
+        return linkHorizontal(o)
+      })
+    // update position
+    links
+      .transition()
+      .duration(duration)
+      .ease(d3.easeQuad)
+      .attr('d', d => {
+        let o = {
+          source: {
+            x: d.source.x,
+            y: d.source.y + (d.source.depth === 0 ? (rootWidth - barWidth / 2) : barWidth / 2)
+          },
+          target: {
+            x: d.target.x,
+            y: d.target.y - barWidth / 2
+          }
+        }
+        return linkHorizontal(o)
+      })
+    links.exit()
+      .transition()
+      .duration(duration)
+      .ease(d3.easeQuad)
+      .attr('d', () => {
+        let o = {x: source.x, y: source.y + barWidth / 2}
+        return linkHorizontal({source: o, target: o})
+      })
+      .remove()
+    /* ================================= 渲染link结束 ======================================= */
+  }
+
+  /**
+   * 渲染节点内容，样式
+   * @param nodeEnter
+   */
+  function addContent(nodeEnter) {
+    nodeEnter
+      .on('mouseover', d => {
+        let identifier = d.data.identifier
+        let selectors = [identifier]
+        let countAllPath = o => {
+          let identifierP = o.data.identifier
+          selectors.push(identifierP)
+          if (o.parent) {
+            countAllPath(o.parent)
+          }
+        }
+        countAllPath(d)
+        d.data._selector = selectors
+        for (let selector of selectors) {
+          d3.selectAll(`.link-${selector}`).style('stroke', linkColorHover)
+          d3.selectAll(`.border-${selector} `).style('stroke', borderColorHover)
+          d3.selectAll(`.rect-${selector} `).style('fill', borderColorHover)
+        }
+      })
+      .on('mouseleave', d => {
+        for (let selector of d.data._selector) {
+          d3.selectAll(`.link-${selector}`).style('stroke', linkColor)
+          d3.selectAll(`.border-${selector} `).style('stroke', borderColor)
+          d3.selectAll(`.rect-${selector} `).style('fill', d => d.depth % 2 === 0 ? '#ba9fe2' : '#84d9e4')
+        }
+      })
+    nodeEnter
+      .append('svg:rect')
+      .attr('class', d => `border-${d.data.identifier}`)
+      .attr('x', -barWidth / 2)
+      .attr('y', -barHeight / 2)
+      .attr('width', d => d.depth === 0 ? rootWidth + 'px' : barWidth + 'px')
+      .attr('height', barHeight + 'px')
+      .style('stroke', borderColor)
+      .style('stroke-width', borderWidth + 'px')
+      .style('fill', function(d) {
+        return d.data.isCmbEnt ? bankColor : '#FFFFFF'
+      })
+    nodeEnter
+      .append('svg:rect')
+      .attr('class', d => `rect-${d.data.identifier}`)
+      .attr('x', -barWidth / 2)
+      .attr('y', -barHeight / 2)
+      .attr('width', borderLeftWidth + 'px')
+      .attr('height', barHeight + 'px')
+      .style('fill', d => d.depth % 2 === 0 ? '#ba9fe2' : '#84d9e4')
+    let nodeCircle = nodeEnter
+      .filter(d => (d.depth !== 0 && d.data._children && d.data._children.length))
+      .append('g')
+      .style('cursor', 'pointer')
+      .classed('circle', true)
+      .attr('transform', `translate(${borderLeftWidth + circleR + padding - barWidth / 2})`)
+      .on('click', d => {
+        toggleNode(d)
+        update({
+          identifier: d.data.identifier,
+          x0: d.data.x0,
+          y0: d.data.y0
+        })
+      })
+    nodeCircle
+      .append('circle')
+      .attr('r', circleR)
+      .style('stroke', '#929292')
+      .style('stroke-width', '1px')
+      .style('fill', '#ffffff')
+    nodeCircle
+      .append('line')
+      .attr('x1', -4)
+      .attr('y1', 0)
+      .attr('x2', 4)
+      .attr('y2', 0)
+      .style('stroke', '#929292')
+      .style('stroke-width', '1px')
+    nodeCircle
+      .append('line')
+      .attr('class', 'vertical-line')
+      .attr('x1', 0)
+      .attr('y1', -4)
+      .attr('x2', 0)
+      .attr('y2', 4)
+      .style('stroke', '#929292')
+      .style('stroke-width', '1px')
+    rootG
+      .selectAll('.vertical-line')
+      .attr('visibility', d => {
+        if (d.data.children) {
+          return 'hidden'
+        } else {
+          return ''
+        }
+      })
+    let blank = 0
+    let nodeText = nodeEnter
+      .append('g')
+      .attr('transform', d => {
+        blank = borderLeftWidth + padding
+        if (d.depth !== 0 && d.data._children && d.data._children.length) {
+          blank += circleR * 2 + padding
+        }
+        return `translate(${blank - barWidth / 2})`
+      })
+    nodeText
+      .append('svg:text')
+      .attr('x', 0)
+      .attr('dy', d => (d.data.percent || d.data.amount) ? -4 : '0.35em')
+      .text(d => {
+        let str = d.data.name
+        let dNameWidth = getTextWidth(str, 12)
+        let dShTypeWidth = 0
+        if (d.data.sh_type) {
+          dShTypeWidth = getTextWidth('(' + d.data.sh_type + ')', 12)
+        }
+        let allWidth = dNameWidth + dShTypeWidth + blank
+        if (allWidth + padding > barWidth) {
+          str = str.substring(0, Math.ceil((barWidth - blank - padding) / (dNameWidth / str.length)) - 2 - (d.data.sh_type ? d.data.sh_type.length : 0)) + '...'
+          d.data.ellipsis = true
+        }
+        return str
+      })
+      // .style('fill-opacity', 1e-6) // ie9不支持，放弃
+      .style('font-size', '12px')
+      .style('cursor', d => {
+        if (d.data.type === 'E' && d.data.uid && d.data.uid !== 'null') {
+          return 'pointer'
+        }
+      })
+      .on('mouseover', function (d) {
+        if (d.data.type === 'E' && d.data.uid && d.data.uid !== 'null') {
+          d3.select(this).attr('font-weight', 600)
+        }
+        if (d.data.ellipsis) {
+          tooltip.style('visibility', 'visible')
+            .style('top', d3.event.clientY + 'px')
+            .style('left', d3.event.clientX + 'px')
+            .style('color', '#878787')
+            .style('background', '#fff')
+            .style('border', '1px solid #878787')
+            .style('border-radius', '4px')
+            .style('padding', '6px 8px')
+          tooltip.text(d.data.name)
+        }
+      })
+      .on('mouseleave', function (d) {
+        if (d.data.type === 'E' && d.data.uid && d.data.uid !== 'null') {
+          d3.select(this).attr('font-weight', 500)
+        }
+        if (d.data.ellipsis) {
+          tooltip.style('visibility', 'hidden')
+        }
+      })
+      .on('click', clickEvent)
+      .append('tspan')
+      .style('fill', '#000000')
+      .style('font-weight', '500')
+      .text(d => {
+        if (d.data.sh_type) {
+          return '(' + d.data.sh_type + ')'
+        } else {
+          return ''
+        }
+      })
+    // 股比&认缴金额
+    let nodeEnterPercent = nodeText
+      .filter(d => d.data.percent || d.data.amount)
+      .append('svg:text')
+      .attr('x', 0)
+      .attr('dy', 13)
+      .style('font-size', '12px')
+    nodeEnterPercent
+      .append('tspan')
+      .style('fill', '#666666')
+      .text(d => d.data.percent ? '股比:' : '')
+    nodeEnterPercent
+      .append('tspan')
+      .style('fill', '#ff8a00')
+      .text(d => `${(d.data.percent * 100).toFixed(2)}%`)
+    nodeEnterPercent
+      .append('tspan')
+      .attr('dx', d => d.data.percent ? '10' : '')
+      .style('fill', '#666666')
+      .text(d => {
+        let str = ''
+        let index = d.data.amount.indexOf('shares')
+        if (d.data.amount) {
+          if (index === -1) {
+            str += '认缴金额:'
+          } else if (index !== -1) {
+            str += '持股数:'
+          }
+        }
+        return str
+      })
+    nodeEnterPercent
+      .style('fill', '#ff8a00')
+      .append('tspan')
+      .text(d => {
+        let str = ''
+        if (d.data.amount.indexOf('shares') === -1) {
+          str += d.data.amount + '万元'
+        } else {
+          str += d.data.amount.replace('shares', '') + '万股'
+        }
+        return str
+      })
+  }
+
+  function getTextWidth(text, fontSize) {
+    let textWidth = 0
+    fontSize = fontSize || 14
+    if (text && text.length > 0) {
+      let numCount = 0
+      let symbolCount = 0
+      let smallLetterCount = 0
+      let bigLetterCount = 0
+      let numMatch = text.match(/[0-9]/g)
+      let symbolMatch = text.match(/[.:,\s()]/g)
+      let smallLetterMatch = text.match(/[a-z]/g)
+      let bigLetterMatch = text.match(/[A-Z]/g)
+      if (numMatch) {
+        numCount = numMatch.length
+        textWidth += numCount * 8.2
+      }
+      if (symbolMatch) {
+        symbolCount = symbolMatch.length
+        textWidth += symbolCount * 3.2
+      }
+      if (smallLetterMatch) {
+        smallLetterCount = smallLetterMatch.length
+        textWidth += smallLetterCount * 7.54
+      }
+      if (bigLetterMatch) {
+        bigLetterCount = bigLetterMatch.length
+        textWidth += bigLetterCount * 9.35
+      }
+      textWidth += (text.length - numCount - symbolCount - smallLetterCount - bigLetterCount) * fontSize
+    }
+    return textWidth
+  }
+
+  /**
+   * 展开/收起节点
+   * @param d
+   */
+  function toggleNode(d) {
+    if (d.data.children) {
+      d.data.children = null
+    } else {
+      d.data.children = d.data._children
+    }
+  }
+
+  function init(id, data, fn) {
+    elementId = `#${id}`
+    dataRoot = data
+    dataRoot.children = dataRoot._children
+    clickEvent = fn
+    tooltip = d3.select(elementId)
+      .append('div')
+      .style('position', 'fixed')
+      .style('z-index', '10')
+      .style('visibility', 'hidden')
+      .text('')
+    render()
+  }
+
+  d3.json('data/tree.json')
+    .then(res => {
+      init('devChart', res.data, d => {
+        console.log(d)
+      })
+    })
+
+</script>
+</body>
+
+</html>
